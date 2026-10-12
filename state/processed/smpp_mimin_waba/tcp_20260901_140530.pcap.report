@@ -1,0 +1,186 @@
+============================================================
+SMPP INCIDENT DETECTOR
+============================================================
+supplier: smpp_mimin_waba
+pcap: /root/smpp_monitor/captures/smpp_mimin_waba/tcp_20260901_140530.pcap
+timeout: 30s
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135244768
+delay: 0.017s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135244769
+delay: 0.017s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135245610
+delay: 0.017s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135245748
+delay: 0.018s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135246886
+delay: 0.095s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135246885
+delay: 0.166s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135246904
+delay: 0.021s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135246906
+delay: 0.025s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135246972
+delay: 0.019s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135246976
+delay: 0.023s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135247021
+delay: 0.019s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135247023
+delay: 0.019s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135247046
+delay: 0.022s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135247065
+delay: 0.020s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135247070
+delay: 0.022s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135247074
+delay: 0.072s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135247111
+delay: 0.019s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135247112
+delay: 0.021s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135247117
+delay: 0.042s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135247120
+delay: 0.072s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135247175
+delay: 0.019s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135247176
+delay: 0.020s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135247233
+delay: 0.019s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135247234
+delay: 0.021s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135247249
+delay: 0.071s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135247289
+delay: 0.019s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135247323
+delay: 0.020s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135247341
+delay: 0.019s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135247342
+delay: 0.435s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 135247377
+delay: 0.019s
+status: ESME_RSUBMITFAIL (0x00000045)

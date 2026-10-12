@@ -1,0 +1,66 @@
+============================================================
+SMPP INCIDENT DETECTOR
+============================================================
+supplier: smpp_mimin_waba
+pcap: /root/smpp_monitor/captures/smpp_mimin_waba/tcp_20260830_232326.pcap
+timeout: 30s
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 127067404
+delay: 0.018s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 127067523
+delay: 0.018s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 127067747
+delay: 0.018s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 127067748
+delay: 0.019s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 127068044
+delay: 0.019s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 127068045
+delay: 0.019s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 127068374
+delay: 0.019s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 127068375
+delay: 0.019s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 127068377
+delay: 0.037s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 127068380
+delay: 0.073s
+status: ESME_RSUBMITFAIL (0x00000045)

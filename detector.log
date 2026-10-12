@@ -1,0 +1,482 @@
+2026-09-03 11:35:47 detector worker started, interval=10s
+2026-09-03 11:35:48 incident detected: smpp_mimin_waba tcp_20260903_113424.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_113548
+
+incident created:
+/root/smpp_monitor/incidents/20260903_113548_smpp_mimin_waba.tar.gz
+2026-09-03 11:37:54 incident detected: smpp_mimin_waba tcp_20260903_113646.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_113754
+
+incident created:
+/root/smpp_monitor/incidents/20260903_113754_smpp_mimin_waba.tar.gz
+2026-09-03 11:39:50 incident detected: smpp_mimin_waba tcp_20260903_113846.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_113950
+
+incident created:
+/root/smpp_monitor/incidents/20260903_113950_smpp_mimin_waba.tar.gz
+2026-09-03 11:41:56 incident detected: smpp_mimin_waba tcp_20260903_114046.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_114156
+
+incident created:
+/root/smpp_monitor/incidents/20260903_114156_smpp_mimin_waba.tar.gz
+2026-09-03 11:43:52 incident detected: smpp_mimin_waba tcp_20260903_114246.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_114352
+
+incident created:
+/root/smpp_monitor/incidents/20260903_114352_smpp_mimin_waba.tar.gz
+2026-09-03 11:44:56 incident detected: smpp_mimin_waba tcp_20260903_114346.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_114456
+
+incident created:
+/root/smpp_monitor/incidents/20260903_114456_smpp_mimin_waba.tar.gz
+2026-09-03 11:46:52 incident detected: smpp_mimin_waba tcp_20260903_114546.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_114652
+
+incident created:
+/root/smpp_monitor/incidents/20260903_114652_smpp_mimin_waba.tar.gz
+2026-09-03 11:48:49 incident detected: smpp_mimin_waba tcp_20260903_114746.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_114849
+
+incident created:
+/root/smpp_monitor/incidents/20260903_114849_smpp_mimin_waba.tar.gz
+2026-09-03 11:49:53 incident detected: smpp_mimin_waba tcp_20260903_114846.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_114953
+
+incident created:
+/root/smpp_monitor/incidents/20260903_114953_smpp_mimin_waba.tar.gz
+2026-09-03 11:50:46 incident detected: smpp_mimin_waba tcp_20260903_114946.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_115046
+
+incident created:
+/root/smpp_monitor/incidents/20260903_115046_smpp_mimin_waba.tar.gz
+2026-09-03 11:52:55 incident detected: smpp_mimin_waba tcp_20260903_115146.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_115255
+
+incident created:
+/root/smpp_monitor/incidents/20260903_115255_smpp_mimin_waba.tar.gz
+2026-09-03 11:53:48 incident detected: smpp_mimin_waba tcp_20260903_115246.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_115348
+
+incident created:
+/root/smpp_monitor/incidents/20260903_115348_smpp_mimin_waba.tar.gz
+2026-09-03 11:56:50 incident detected: smpp_mimin_waba tcp_20260903_115546.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_115650
+
+incident created:
+/root/smpp_monitor/incidents/20260903_115650_smpp_mimin_waba.tar.gz
+2026-09-03 11:58:48 incident detected: smpp_mimin_waba tcp_20260903_115746.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_115848
+
+incident created:
+/root/smpp_monitor/incidents/20260903_115848_smpp_mimin_waba.tar.gz
+2026-09-03 12:00:57 incident detected: smpp_mimin_waba tcp_20260903_115946.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_120057
+
+incident created:
+/root/smpp_monitor/incidents/20260903_120057_smpp_mimin_waba.tar.gz
+2026-09-03 12:02:55 incident detected: smpp_mimin_waba tcp_20260903_120146.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_120255
+
+incident created:
+/root/smpp_monitor/incidents/20260903_120255_smpp_mimin_waba.tar.gz
+2026-09-03 12:04:54 incident detected: smpp_mimin_waba tcp_20260903_120346.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_120454
+
+incident created:
+/root/smpp_monitor/incidents/20260903_120454_smpp_mimin_waba.tar.gz
+2026-09-03 12:06:53 incident detected: smpp_mimin_waba tcp_20260903_120546.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_120653
+
+incident created:
+/root/smpp_monitor/incidents/20260903_120653_smpp_mimin_waba.tar.gz
+2026-09-03 12:07:48 incident detected: smpp_mimin_waba tcp_20260903_120646.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_120748
+
+incident created:
+/root/smpp_monitor/incidents/20260903_120748_smpp_mimin_waba.tar.gz
+2026-09-03 12:08:52 incident detected: smpp_mimin_waba tcp_20260903_120746.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_120852
+
+incident created:
+/root/smpp_monitor/incidents/20260903_120852_smpp_mimin_waba.tar.gz
+2026-09-03 12:10:52 incident detected: smpp_mimin_waba tcp_20260903_120946.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_121052
+
+incident created:
+/root/smpp_monitor/incidents/20260903_121052_smpp_mimin_waba.tar.gz
+2026-09-03 12:12:51 incident detected: smpp_mimin_waba tcp_20260903_121146.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_121251
+
+incident created:
+/root/smpp_monitor/incidents/20260903_121251_smpp_mimin_waba.tar.gz
+2026-09-03 12:14:51 incident detected: smpp_mimin_waba tcp_20260903_121346.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_121451
+
+incident created:
+/root/smpp_monitor/incidents/20260903_121451_smpp_mimin_waba.tar.gz
+2026-09-03 12:15:56 incident detected: smpp_mimin_waba tcp_20260903_121446.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_121556
+
+incident created:
+/root/smpp_monitor/incidents/20260903_121556_smpp_mimin_waba.tar.gz
+2026-09-03 12:16:51 incident detected: smpp_mimin_waba tcp_20260903_121546.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_121651
+
+incident created:
+/root/smpp_monitor/incidents/20260903_121651_smpp_mimin_waba.tar.gz
+2026-09-03 12:18:50 incident detected: smpp_mimin_waba tcp_20260903_121746.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_121850
+
+incident created:
+/root/smpp_monitor/incidents/20260903_121850_smpp_mimin_waba.tar.gz
+2026-09-03 12:20:50 incident detected: smpp_mimin_waba tcp_20260903_121946.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_122050
+
+incident created:
+/root/smpp_monitor/incidents/20260903_122050_smpp_mimin_waba.tar.gz
+2026-09-03 12:22:50 incident detected: smpp_mimin_waba tcp_20260903_122146.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_122250
+
+incident created:
+/root/smpp_monitor/incidents/20260903_122250_smpp_mimin_waba.tar.gz
+2026-09-03 12:24:49 incident detected: smpp_mimin_waba tcp_20260903_122346.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_122449
+
+incident created:
+/root/smpp_monitor/incidents/20260903_122449_smpp_mimin_waba.tar.gz
+2026-09-03 12:26:50 incident detected: smpp_mimin_waba tcp_20260903_122546.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_122650
+
+incident created:
+/root/smpp_monitor/incidents/20260903_122650_smpp_mimin_waba.tar.gz
+2026-09-03 12:28:50 incident detected: smpp_mimin_waba tcp_20260903_122746.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_122850
+
+incident created:
+/root/smpp_monitor/incidents/20260903_122850_smpp_mimin_waba.tar.gz
+2026-09-03 12:30:50 incident detected: smpp_mimin_waba tcp_20260903_122946.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_123050
+
+incident created:
+/root/smpp_monitor/incidents/20260903_123050_smpp_mimin_waba.tar.gz
+2026-09-03 12:31:56 incident detected: smpp_mimin_waba tcp_20260903_123046.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_123156
+
+incident created:
+/root/smpp_monitor/incidents/20260903_123156_smpp_mimin_waba.tar.gz
+2026-09-03 12:32:51 incident detected: smpp_mimin_waba tcp_20260903_123146.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_123251
+
+incident created:
+/root/smpp_monitor/incidents/20260903_123251_smpp_mimin_waba.tar.gz
+2026-09-03 12:34:52 incident detected: smpp_mimin_waba tcp_20260903_123346.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_123452
+
+incident created:
+/root/smpp_monitor/incidents/20260903_123452_smpp_mimin_waba.tar.gz
+2026-09-03 12:36:53 incident detected: smpp_mimin_waba tcp_20260903_123546.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_123653
+
+incident created:
+/root/smpp_monitor/incidents/20260903_123653_smpp_mimin_waba.tar.gz
+2026-09-03 12:38:54 incident detected: smpp_mimin_waba tcp_20260903_123746.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_123854
+
+incident created:
+/root/smpp_monitor/incidents/20260903_123854_smpp_mimin_waba.tar.gz
+2026-09-03 12:40:54 incident detected: smpp_mimin_waba tcp_20260903_123946.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_124054
+
+incident created:
+/root/smpp_monitor/incidents/20260903_124054_smpp_mimin_waba.tar.gz
+2026-09-03 12:41:49 incident detected: smpp_mimin_waba tcp_20260903_124046.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_124149
+
+incident created:
+/root/smpp_monitor/incidents/20260903_124149_smpp_mimin_waba.tar.gz
+2026-09-03 12:43:51 incident detected: smpp_mimin_waba tcp_20260903_124246.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_124351
+
+incident created:
+/root/smpp_monitor/incidents/20260903_124351_smpp_mimin_waba.tar.gz
+2026-09-03 12:44:02 incident detected: smpp_bullion_voice tcp_20260903_124251.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_bullion_voice_20260903_124402
+
+incident created:
+/root/smpp_monitor/incidents/20260903_124402_smpp_bullion_voice.tar.gz
+2026-09-03 12:45:53 incident detected: smpp_mimin_waba tcp_20260903_124446.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_124553
+
+incident created:
+/root/smpp_monitor/incidents/20260903_124553_smpp_mimin_waba.tar.gz
+2026-09-03 12:46:49 incident detected: smpp_mimin_waba tcp_20260903_124546.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_124649
+
+incident created:
+/root/smpp_monitor/incidents/20260903_124649_smpp_mimin_waba.tar.gz
+2026-09-03 12:48:50 incident detected: smpp_mimin_waba tcp_20260903_124746.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_124850
+
+incident created:
+/root/smpp_monitor/incidents/20260903_124850_smpp_mimin_waba.tar.gz
+2026-09-03 12:50:52 incident detected: smpp_mimin_waba tcp_20260903_124946.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_125052
+
+incident created:
+/root/smpp_monitor/incidents/20260903_125052_smpp_mimin_waba.tar.gz
+2026-09-03 12:51:48 incident detected: smpp_mimin_waba tcp_20260903_125046.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_125148
+
+incident created:
+/root/smpp_monitor/incidents/20260903_125148_smpp_mimin_waba.tar.gz
+2026-09-03 12:53:50 incident detected: smpp_mimin_waba tcp_20260903_125246.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_125350
+
+incident created:
+/root/smpp_monitor/incidents/20260903_125350_smpp_mimin_waba.tar.gz
+2026-09-03 12:55:53 incident detected: smpp_mimin_waba tcp_20260903_125446.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_125553
+
+incident created:
+/root/smpp_monitor/incidents/20260903_125553_smpp_mimin_waba.tar.gz
+2026-09-03 12:56:49 incident detected: smpp_mimin_waba tcp_20260903_125546.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_125649
+
+incident created:
+/root/smpp_monitor/incidents/20260903_125649_smpp_mimin_waba.tar.gz
+2026-09-03 12:57:56 incident detected: smpp_mimin_waba tcp_20260903_125646.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_125756
+
+incident created:
+/root/smpp_monitor/incidents/20260903_125756_smpp_mimin_waba.tar.gz
+2026-09-03 12:59:48 incident detected: smpp_mimin_waba tcp_20260903_125846.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_125948
+
+incident created:
+/root/smpp_monitor/incidents/20260903_125948_smpp_mimin_waba.tar.gz
+2026-09-03 13:01:50 incident detected: smpp_mimin_waba tcp_20260903_130046.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_130150
+
+incident created:
+/root/smpp_monitor/incidents/20260903_130150_smpp_mimin_waba.tar.gz
+2026-09-03 13:03:55 incident detected: smpp_mimin_waba tcp_20260903_130246.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_130355
+
+incident created:
+/root/smpp_monitor/incidents/20260903_130355_smpp_mimin_waba.tar.gz
+2026-09-03 13:05:49 incident detected: smpp_mimin_waba tcp_20260903_130446.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_130549
+
+incident created:
+/root/smpp_monitor/incidents/20260903_130549_smpp_mimin_waba.tar.gz
+2026-09-03 13:07:52 incident detected: smpp_mimin_waba tcp_20260903_130646.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_130752
+
+incident created:
+/root/smpp_monitor/incidents/20260903_130752_smpp_mimin_waba.tar.gz
+2026-09-03 13:09:57 incident detected: smpp_mimin_waba tcp_20260903_130846.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_130957
+
+incident created:
+/root/smpp_monitor/incidents/20260903_130957_smpp_mimin_waba.tar.gz
+2026-09-03 13:12:47 incident detected: smpp_mimin_waba tcp_20260903_131146.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_131247
+
+incident created:
+/root/smpp_monitor/incidents/20260903_131247_smpp_mimin_waba.tar.gz
+2026-09-03 13:14:52 incident detected: smpp_mimin_waba tcp_20260903_131346.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_131452
+
+incident created:
+/root/smpp_monitor/incidents/20260903_131452_smpp_mimin_waba.tar.gz
+2026-09-03 13:15:49 incident detected: smpp_mimin_waba tcp_20260903_131446.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_131549
+
+incident created:
+/root/smpp_monitor/incidents/20260903_131549_smpp_mimin_waba.tar.gz
+2026-09-03 13:17:53 incident detected: smpp_mimin_waba tcp_20260903_131646.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_131753
+
+incident created:
+/root/smpp_monitor/incidents/20260903_131753_smpp_mimin_waba.tar.gz
+2026-09-03 13:19:47 incident detected: smpp_mimin_waba tcp_20260903_131846.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_131947
+
+incident created:
+/root/smpp_monitor/incidents/20260903_131947_smpp_mimin_waba.tar.gz
+2026-09-03 13:21:53 incident detected: smpp_mimin_waba tcp_20260903_132046.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_132153
+
+incident created:
+/root/smpp_monitor/incidents/20260903_132153_smpp_mimin_waba.tar.gz
+2026-09-03 13:22:49 incident detected: smpp_mimin_waba tcp_20260903_132146.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_132249
+
+incident created:
+/root/smpp_monitor/incidents/20260903_132249_smpp_mimin_waba.tar.gz
+2026-09-03 13:23:57 incident detected: smpp_mimin_waba tcp_20260903_132246.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_132357
+
+incident created:
+/root/smpp_monitor/incidents/20260903_132357_smpp_mimin_waba.tar.gz
+2026-09-03 13:24:54 incident detected: smpp_mimin_waba tcp_20260903_132346.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_132454
+
+incident created:
+/root/smpp_monitor/incidents/20260903_132454_smpp_mimin_waba.tar.gz
+2026-09-03 13:26:47 incident detected: smpp_mimin_waba tcp_20260903_132546.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_132647
+
+incident created:
+/root/smpp_monitor/incidents/20260903_132647_smpp_mimin_waba.tar.gz
+2026-09-03 13:27:55 incident detected: smpp_mimin_waba tcp_20260903_132646.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_132755
+
+incident created:
+/root/smpp_monitor/incidents/20260903_132755_smpp_mimin_waba.tar.gz
+2026-09-03 13:29:48 incident detected: smpp_mimin_waba tcp_20260903_132846.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_132948
+
+incident created:
+/root/smpp_monitor/incidents/20260903_132948_smpp_mimin_waba.tar.gz
+2026-09-03 13:30:56 incident detected: smpp_mimin_waba tcp_20260903_132946.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_133056
+
+incident created:
+/root/smpp_monitor/incidents/20260903_133056_smpp_mimin_waba.tar.gz
+2026-09-03 13:32:49 incident detected: smpp_mimin_waba tcp_20260903_133146.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_133249
+
+incident created:
+/root/smpp_monitor/incidents/20260903_133249_smpp_mimin_waba.tar.gz
+2026-09-03 13:34:52 incident detected: smpp_mimin_waba tcp_20260903_133346.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_133452
+
+incident created:
+/root/smpp_monitor/incidents/20260903_133452_smpp_mimin_waba.tar.gz
+2026-09-03 13:36:56 incident detected: smpp_mimin_waba tcp_20260903_133546.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_133656
+
+incident created:
+/root/smpp_monitor/incidents/20260903_133656_smpp_mimin_waba.tar.gz
+2026-09-03 13:38:50 incident detected: smpp_mimin_waba tcp_20260903_133746.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_133850
+
+incident created:
+/root/smpp_monitor/incidents/20260903_133850_smpp_mimin_waba.tar.gz
+2026-09-03 13:39:47 incident detected: smpp_mimin_waba tcp_20260903_133846.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_133947
+
+incident created:
+/root/smpp_monitor/incidents/20260903_133947_smpp_mimin_waba.tar.gz
+2026-09-03 13:40:55 incident detected: smpp_mimin_waba tcp_20260903_133946.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_134055
+
+incident created:
+/root/smpp_monitor/incidents/20260903_134055_smpp_mimin_waba.tar.gz
+2026-09-03 13:41:53 incident detected: smpp_mimin_waba tcp_20260903_134046.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_134153
+
+incident created:
+/root/smpp_monitor/incidents/20260903_134153_smpp_mimin_waba.tar.gz
+2026-09-03 13:42:50 incident detected: smpp_mimin_waba tcp_20260903_134146.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_134250
+
+incident created:
+/root/smpp_monitor/incidents/20260903_134250_smpp_mimin_waba.tar.gz
+2026-09-03 13:44:55 incident detected: smpp_mimin_waba tcp_20260903_134346.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_134456
+
+incident created:
+/root/smpp_monitor/incidents/20260903_134456_smpp_mimin_waba.tar.gz
+2026-09-03 13:46:49 incident detected: smpp_mimin_waba tcp_20260903_134546.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_134649
+
+incident created:
+/root/smpp_monitor/incidents/20260903_134649_smpp_mimin_waba.tar.gz
+2026-09-03 13:48:55 incident detected: smpp_mimin_waba tcp_20260903_134746.pcap
+create incident:
+/root/smpp_monitor/incidents/smpp_mimin_waba_20260903_134855
+
+incident created:
+/root/smpp_monitor/incidents/20260903_134855_smpp_mimin_waba.tar.gz
+2026-09-03 13:49:05 detector worker stopped

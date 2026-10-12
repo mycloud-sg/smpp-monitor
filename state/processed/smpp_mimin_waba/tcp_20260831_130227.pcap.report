@@ -1,0 +1,30 @@
+============================================================
+SMPP INCIDENT DETECTOR
+============================================================
+supplier: smpp_mimin_waba
+pcap: /root/smpp_monitor/captures/smpp_mimin_waba/tcp_20260831_130227.pcap
+timeout: 30s
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 129791136
+delay: 0.018s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 129791141
+delay: 0.062s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 129791153
+delay: 0.030s
+status: ESME_RSUBMITFAIL (0x00000045)
+
+[FAILED]
+target: 16.79.14.25:2777
+seq: 129791160
+delay: 0.069s
+status: ESME_RSUBMITFAIL (0x00000045)

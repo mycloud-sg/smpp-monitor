@@ -1,0 +1,90 @@
+============================================================
+SMPP INCIDENT DETECTOR
+============================================================
+supplier: smpp_mimin_waba
+pcap: /root/smpp_monitor/captures/smpp_mimin_waba/tcp_20260725_160000.pcap
+timeout: 30s
+
+[RESP_TIMEOUT]
+target: 35.219.6.35:2777
+seq: 357353688
+delay: 36.805s
+status: ESME_ROK (0x00000000)
+
+[RESP_TIMEOUT]
+target: 35.219.6.35:2777
+seq: 357353689
+delay: 36.844s
+status: ESME_ROK (0x00000000)
+
+[RESP_TIMEOUT]
+target: 35.219.6.35:2777
+seq: 357353734
+delay: 35.595s
+status: ESME_ROK (0x00000000)
+
+[RESP_TIMEOUT]
+target: 35.219.6.35:2777
+seq: 357353736
+delay: 35.595s
+status: ESME_ROK (0x00000000)
+
+[RESP_TIMEOUT]
+target: 35.219.6.35:2777
+seq: 357353758
+delay: 35.034s
+status: ESME_ROK (0x00000000)
+
+[RESP_TIMEOUT]
+target: 35.219.6.35:2777
+seq: 357353743
+delay: 35.264s
+status: ESME_ROK (0x00000000)
+
+[RESP_TIMEOUT]
+target: 35.219.6.35:2777
+seq: 357353775
+delay: 34.856s
+status: ESME_ROK (0x00000000)
+
+[RESP_TIMEOUT]
+target: 35.219.6.35:2777
+seq: 357353835
+delay: 33.413s
+status: ESME_ROK (0x00000000)
+
+[RESP_TIMEOUT]
+target: 35.219.6.35:2777
+seq: 357353918
+delay: 32.222s
+status: ESME_ROK (0x00000000)
+
+[RESP_TIMEOUT]
+target: 35.219.6.35:2777
+seq: 357353956
+delay: 31.833s
+status: ESME_ROK (0x00000000)
+
+[RESP_TIMEOUT]
+target: 35.219.6.35:2777
+seq: 357353870
+delay: 33.151s
+status: ESME_ROK (0x00000000)
+
+[RESP_TIMEOUT]
+target: 35.219.6.35:2777
+seq: 357353990
+delay: 31.681s
+status: ESME_ROK (0x00000000)
+
+[RESP_TIMEOUT]
+target: 35.219.6.35:2777
+seq: 357354046
+delay: 31.107s
+status: ESME_ROK (0x00000000)
+
+[RESP_TIMEOUT]
+target: 35.219.6.35:2777
+seq: 357354043
+delay: 31.321s
+status: ESME_ROK (0x00000000)

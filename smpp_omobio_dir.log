@@ -1,0 +1,16 @@
+================================
+SMPP Capture Worker
+================================
+supplier : smpp_omobio_dir
+ip       : 62.67.222.48
+port     : 2875
+dir      : /root/smpp_monitor/captures/smpp_omobio_dir
+rotate   : 60s
+files    : 30
+================================
+2026-07-12 23:30:52 start tcpdump
+tcpdump: listening on any, link-type LINUX_SLL (Linux cooked), capture size 262144 bytes
+2026-07-21 11:12:29 stopping worker: smpp_omobio_dir
+867032 packets captured
+867246 packets received by filter
+101 packets dropped by kernel

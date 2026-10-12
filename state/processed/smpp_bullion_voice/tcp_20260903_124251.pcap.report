@@ -1,0 +1,18 @@
+============================================================
+SMPP INCIDENT DETECTOR
+============================================================
+supplier: smpp_bullion_voice
+pcap: /root/smpp_monitor/captures/smpp_bullion_voice/tcp_20260903_124251.pcap
+timeout: 30s
+
+[RESP_TIMEOUT]
+target: 31.97.117.226:2776
+seq: 145106014
+delay: 32.135s
+status: ESME_ROK (0x00000000)
+
+[RESP_TIMEOUT]
+target: 31.97.117.226:2776
+seq: 145106014
+delay: 37.959s
+status: ESME_ROK (0x00000000)

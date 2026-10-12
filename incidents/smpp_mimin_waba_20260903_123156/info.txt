@@ -1,0 +1,13 @@
+
+time:
+Thu Sep  3 12:31:56 CST 2026
+
+
+supplier:
+smpp_mimin_waba
+
+
+hostname:
+ip-172-31-30-172.ap-southeast-1.compute.internal
+
+

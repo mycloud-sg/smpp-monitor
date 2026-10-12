@@ -1,0 +1,549 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+import glob
+import subprocess
+
+
+BASE_DIR = "/root/smpp_monitor"
+
+CONFIG_FILE = BASE_DIR + "/smpp_suppliers.conf"
+
+CAPTURE_DIR = BASE_DIR + "/captures"
+
+
+
+########################################
+# 读取供应商配置
+########################################
+
+def get_config(supplier):
+
+    config = {}
+
+    if not os.path.exists(CONFIG_FILE):
+        return config
+
+
+    found = False
+
+
+    with open(CONFIG_FILE) as f:
+
+        for line in f:
+
+            line = line.strip()
+
+
+            if not line:
+                continue
+
+
+            if line.startswith("["):
+
+                found = (
+                    line == "[" + supplier + "]"
+                )
+
+                continue
+
+
+
+            if found and "=" in line:
+
+                k, v = line.split("=", 1)
+
+                config[k.strip()] = v.strip()
+
+
+
+    return config
+
+
+
+########################################
+# 获取最新 pcap
+########################################
+
+def latest_pcap(supplier):
+
+    path = os.path.join(
+        CAPTURE_DIR,
+        supplier,
+        "*.pcap"
+    )
+
+
+    files = glob.glob(path)
+
+
+    if not files:
+        return None
+
+
+    now = os.path.getmtime
+
+
+    # 排除正在写入的 pcap
+    stable_files = []
+
+
+    import time
+
+
+    current = time.time()
+
+
+    for f in files:
+
+        mtime = os.path.getmtime(f)
+
+
+        # 文件超过 5 秒没有变化
+        if current - mtime > 5:
+
+            stable_files.append(f)
+
+
+
+    if not stable_files:
+
+        return None
+
+
+
+    return max(
+        stable_files,
+        key=os.path.getmtime
+    )
+
+
+# tshark解析
+########################################
+
+def run_tshark(pcap):
+
+    cmd = [
+
+        "tshark",
+
+        "-r",
+        pcap,
+
+        "-Y",
+        "smpp",
+
+        "-T",
+        "fields",
+
+        "-e",
+        "frame.time_relative",
+
+        "-e",
+        "ip.src",
+
+        "-e",
+        "ip.dst",
+
+        "-e",
+        "smpp.sequence_number",
+
+        "-e",
+        "smpp.command_id",
+
+        "-e",
+        "smpp.command_status",
+
+    ]
+
+
+    result = subprocess.run(
+
+        cmd,
+
+        stdout=subprocess.PIPE,
+
+        stderr=subprocess.DEVNULL,
+
+        universal_newlines=True
+
+    )
+
+
+    return result.stdout.splitlines()
+
+
+
+########################################
+# SMPP分析
+########################################
+
+def analyze(lines, supplier, timeout):
+
+
+    submits = {}
+
+    responses = []
+
+
+
+    for line in lines:
+
+
+        fields = line.split("\t")
+
+
+        if len(fields) < 5:
+
+            continue
+
+
+
+        try:
+
+            tm = float(fields[0])
+
+        except:
+
+            continue
+
+
+
+        src = fields[1]
+
+        dst = fields[2]
+
+        seq = fields[3]
+
+        cmd = fields[4]
+
+
+
+        status = ""
+
+        if len(fields) >= 6:
+
+            status = fields[5]
+
+
+
+        #
+        # submit_sm
+        #
+
+        if cmd == "0x00000004":
+
+
+            submits[seq] = {
+
+                "time": tm,
+
+                "src": src,
+
+                "dst": dst
+
+            }
+
+
+
+        #
+        # submit_sm_resp
+        #
+
+        elif cmd == "0x80000004":
+
+
+            responses.append({
+
+                "seq": seq,
+
+                "time": tm,
+
+                "status": status
+
+            })
+
+
+
+
+
+    result = []
+
+
+
+    response_seq = set()
+
+
+
+    for resp in responses:
+
+
+        seq = resp["seq"]
+
+
+        response_seq.add(seq)
+
+
+
+        if seq not in submits:
+
+            continue
+
+
+
+        submit = submits[seq]
+
+
+
+        delay = (
+
+            resp["time"]
+
+            -
+
+            submit["time"]
+
+        )
+
+
+
+        #
+        # resp慢
+        #
+
+        if delay >= timeout:
+
+
+            result.append({
+
+                "type": "RESP_TIMEOUT",
+
+                "seq": seq,
+
+                "delay": delay,
+
+                "status": resp["status"],
+
+                "target": submit["dst"]
+
+            })
+
+
+
+        #
+        # resp失败
+        #
+
+        if resp["status"] not in (
+
+            "",
+
+            "0x00000000"
+
+        ):
+
+
+            result.append({
+
+                "type": "FAILED",
+
+                "seq": seq,
+
+                "delay": delay,
+
+                "status": resp["status"],
+
+                "target": submit["dst"]
+
+            })
+
+
+
+
+    #
+    # 无响应
+    #
+
+    for seq, submit in submits.items():
+
+
+        if seq not in response_seq:
+
+
+            result.append({
+
+                "type": "NO_RESP",
+
+                "seq": seq,
+
+                "delay": None,
+
+                "status": "",
+
+                "target": submit["dst"]
+
+            })
+
+
+
+    return result
+
+
+
+########################################
+# 输出
+########################################
+
+def print_report(
+        supplier,
+        pcap,
+        errors
+):
+
+
+    print("=" * 60)
+
+    print("SMPP INCIDENT DETECTOR")
+
+    print("=" * 60)
+
+
+    print("supplier:", supplier)
+
+    print("pcap:", pcap)
+
+
+
+    for e in errors:
+
+
+        print()
+
+        print("[" + e["type"] + "]")
+
+
+        print(
+            "seq:",
+            e["seq"]
+        )
+
+
+        print(
+            "target:",
+            e["target"]
+        )
+
+
+        if e["delay"] is not None:
+
+            print(
+                "delay:",
+                "%.3fs" % e["delay"]
+            )
+
+
+        if e["status"]:
+
+            print(
+                "status:",
+                e["status"]
+            )
+
+
+
+########################################
+# main
+########################################
+
+def main():
+
+
+    if len(sys.argv) != 2:
+
+
+        print(
+            "Usage: python3 smpp_detector.py supplier"
+        )
+
+        sys.exit(1)
+
+
+
+    supplier = sys.argv[1]
+
+
+
+    config = get_config(supplier)
+
+
+
+    if not config:
+
+        print(
+            "supplier config not found:",
+            supplier
+        )
+
+        sys.exit(1)
+
+
+
+    timeout = int(
+        config.get(
+            "timeout",
+            30
+        )
+    )
+
+
+
+    pcap = latest_pcap(supplier)
+
+
+
+    if not pcap:
+
+
+        print(
+            "no pcap found"
+        )
+
+        return
+
+
+
+    lines = run_tshark(pcap)
+
+
+
+    errors = analyze(
+
+        lines,
+
+        supplier,
+
+        timeout
+
+    )
+
+
+
+    if errors:
+
+        print_report(
+
+            supplier,
+
+            pcap,
+
+            errors
+
+        )
+
+        sys.exit(2)
+
+
+if __name__ == "__main__":
+
+    main()

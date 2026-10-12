@@ -1,0 +1,12 @@
+============================================================
+SMPP INCIDENT DETECTOR
+============================================================
+supplier: smpp_mimin_waba
+pcap: /root/smpp_monitor/captures/smpp_mimin_waba/tcp_20260725_155600.pcap
+timeout: 30s
+
+[RESP_TIMEOUT]
+target: 35.219.6.35:2777
+seq: 357338467
+delay: 31.747s
+status: ESME_ROK (0x00000000)
