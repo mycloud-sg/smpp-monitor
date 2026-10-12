@@ -9,15 +9,18 @@ PID_FILE="$PID_DIR/capture.pid"
 DUMPCAP_PID_FILE="$PID_DIR/capture.dumpcap.pid"
 INTERFACE="${INTERFACE:-any}"
 ROTATE_SECONDS="${ROTATE_SECONDS:-60}"
-ROTATE_FILES="${ROTATE_FILES:-40}"
-SNAPLEN="${SNAPLEN:-512}"
+SNAPLEN="${SNAPLEN:-1024}"
 CONFIG_CHECK_INTERVAL="${CONFIG_CHECK_INTERVAL:-5}"
+CAPTURE_RETENTION_MINUTES="${CAPTURE_RETENTION_MINUTES:-30}"
+# Internal cadence; retention is the only user-facing cleanup setting.
+CAPTURE_CLEANUP_INTERVAL=300
 
 mkdir -p "$CAPTURE_DIR" "$PID_DIR"
 echo $$ > "$PID_FILE"
 dumpcap_pid=""
 config_signature=""
 reload_requested=1
+last_capture_cleanup=0
 
 log() { echo "$(date '+%F %T') $*"; }
 configuration_signature() { cksum "$CONFIG_FILE" 2>/dev/null | awk '{print $1 ":" $2}'; }
@@ -60,18 +63,18 @@ start_dumpcap() {
         log "ERROR config not found: $CONFIG_FILE"
         return 1
     fi
-    local capture_filter generation output new_pid old_pid
+    local capture_filter started_at output new_pid
     capture_filter=$(build_capture_filter)
     if [ -z "$capture_filter" ]; then
         log "ERROR no valid supplier ip/port found in $CONFIG_FILE"
         return 1
     fi
-    generation=$(date +%Y%m%d_%H%M%S)
-    output="$CAPTURE_DIR/smpp_${generation}.pcapng"
+    started_at=$(date +%Y%m%d_%H%M%S)
+    output="$CAPTURE_DIR/smpp_${started_at}.pcapng"
     log "starting dumpcap interface=$INTERFACE rotate=${ROTATE_SECONDS}s snaplen=$SNAPLEN"
     log "capture filter: $capture_filter"
     dumpcap -q -i "$INTERFACE" -s "$SNAPLEN" -f "$capture_filter" \
-        -b "duration:$ROTATE_SECONDS" -b "files:$ROTATE_FILES" -w "$output" &
+        -b "duration:$ROTATE_SECONDS" -w "$output" &
     new_pid=$!
     sleep 1
     if ! kill -0 "$new_pid" 2>/dev/null; then
@@ -79,15 +82,44 @@ start_dumpcap() {
         log "ERROR dumpcap failed to start"
         return 1
     fi
-    old_pid="$dumpcap_pid"
     dumpcap_pid="$new_pid"
     echo "$dumpcap_pid" > "$DUMPCAP_PID_FILE"
-    if [ -n "$old_pid" ] && kill -0 "$old_pid" 2>/dev/null; then
-        kill -TERM "$old_pid" 2>/dev/null || true
-        wait "$old_pid" 2>/dev/null || true
-    fi
     config_signature=$(configuration_signature)
     log "dumpcap running pid=$dumpcap_pid"
+}
+
+restart_dumpcap() {
+    log "reloading capture configuration"
+    stop_dumpcap
+    start_dumpcap
+}
+
+cleanup_expired_captures() {
+    local now capture newest
+    now=$(date +%s)
+    if [ $((now - last_capture_cleanup)) -lt "$CAPTURE_CLEANUP_INTERVAL" ]; then
+        return
+    fi
+
+    # Never remove the newest file because dumpcap may still be writing it.
+    newest=$(
+        find "$CAPTURE_DIR" -maxdepth 1 -type f \
+            \( -name '*.pcap' -o -name '*.pcapng' \) \
+            -printf '%T@ %p\n' 2>/dev/null \
+        | sort -nr | head -1 | cut -d' ' -f2-
+    )
+
+    while IFS= read -r capture; do
+        [ -n "$capture" ] || continue
+        [ "$capture" = "$newest" ] && continue
+        log "remove expired capture: $capture"
+        rm -f "$capture"
+    done < <(
+        find "$CAPTURE_DIR" -maxdepth 1 -type f \
+            \( -name '*.pcap' -o -name '*.pcapng' \) \
+            -mmin +"$CAPTURE_RETENTION_MINUTES" 2>/dev/null
+    )
+    last_capture_cleanup="$now"
 }
 
 cleanup() {
@@ -105,7 +137,7 @@ while true; do
     current_signature=$(configuration_signature)
     if [ "$reload_requested" -eq 1 ] || [ "$current_signature" != "$config_signature" ]; then
         reload_requested=0
-        if ! start_dumpcap; then
+        if ! restart_dumpcap; then
             sleep "$CONFIG_CHECK_INTERVAL"
             continue
         fi
@@ -113,5 +145,6 @@ while true; do
         log "dumpcap stopped unexpectedly; restarting"
         start_dumpcap || true
     fi
+    cleanup_expired_captures
     sleep "$CONFIG_CHECK_INTERVAL"
 done

@@ -25,7 +25,7 @@ INCIDENT_SCRIPT = os.path.join(BASE_DIR, "smpp_incident.sh")
 
 RETRANSMISSION_THRESHOLD = int(os.environ.get("TCP_RETRANSMISSION_THRESHOLD", "10"))
 INCIDENT_COOLDOWN_SECONDS = int(os.environ.get("INCIDENT_COOLDOWN_SECONDS", "300"))
-ALERT_ON_FIN = os.environ.get("ALERT_ON_FIN", "1") != "0"
+ALERT_ON_FIN = os.environ.get("ALERT_ON_FIN", "0") != "0"
 
 SUBMIT_SM = 0x00000004
 SUBMIT_SM_RESP = 0x80000004

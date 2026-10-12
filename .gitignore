@@ -1,4 +1,28 @@
-.idea
-incidents
-!state
-state/processed
+# IDE / OS
+.idea/
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Local backups and temporary files
+*.bak
+*.tmp
+*.swp
+*~
+
+# Runtime logs and human-readable diagnosis output
+*.log
+diagnosis.log
+diagnosis-latest.txt
+diagnosis/
+
+# Packet captures and generated incident evidence
+captures/
+incidents/
+
+# Runtime process and detector state
+pids/
+locks/
+state/

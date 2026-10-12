@@ -11,8 +11,7 @@ LOG_FILE="$BASE_DIR/detector.log"
 PID_FILE="$PID_DIR/detector.pid"
 LAST_CLEANUP_FILE="$BASE_DIR/state/last_cleanup"
 INTERVAL="${INTERVAL:-15}"
-CAPTURE_KEEP_FILES="${CAPTURE_KEEP_FILES:-60}"
-INCIDENT_RETENTION_DAYS="${INCIDENT_RETENTION_DAYS:-7}"
+INCIDENT_RETENTION_DAYS="${INCIDENT_RETENTION_DAYS:-3}"
 
 mkdir -p "$CAPTURE_DIR" "$PID_DIR" "$STATE_DIR" "$INCIDENT_DIR"
 echo $$ > "$PID_FILE"
@@ -71,31 +70,21 @@ scan_completed_captures() {
 }
 
 periodic_cleanup() {
-    local now last=0 count remove_count file done_file
+    local now last=0 done_file capture_name
     now=$(date +%s)
     if [ -f "$LAST_CLEANUP_FILE" ]; then
         last=$(cat "$LAST_CLEANUP_FILE" 2>/dev/null || echo 0)
     fi
     [ $((now - last)) -lt 3600 ] && return
 
-    count=$(
-        find "$CAPTURE_DIR" -maxdepth 1 -type f \
-            \( -name '*.pcap' -o -name '*.pcapng' \) | wc -l
-    )
-    if [ "$count" -gt "$CAPTURE_KEEP_FILES" ]; then
-        remove_count=$((count - CAPTURE_KEEP_FILES))
-        while IFS= read -r file; do
-            [ -n "$file" ] || continue
-            rm -f "$file"
-            done_file="$STATE_DIR/$(basename "$file").done"
+    # Capture worker owns PCAP retention. Detector only removes stale state.
+    while IFS= read -r done_file; do
+        [ -n "$done_file" ] || continue
+        capture_name=$(basename "$done_file" .done)
+        if [ ! -f "$CAPTURE_DIR/$capture_name" ]; then
             rm -f "$done_file"
-        done < <(
-            find "$CAPTURE_DIR" -maxdepth 1 -type f \
-                \( -name '*.pcap' -o -name '*.pcapng' \) \
-                -printf '%T@ %p\n' 2>/dev/null \
-            | sort -n | head -n "$remove_count" | cut -d' ' -f2-
-        )
-    fi
+        fi
+    done < <(find "$STATE_DIR" -maxdepth 1 -type f -name '*.done' 2>/dev/null)
 
     find "$INCIDENT_DIR" -maxdepth 1 -type f -name '*.tar.gz' \
         -mtime +"$INCIDENT_RETENTION_DAYS" -delete 2>/dev/null || true
