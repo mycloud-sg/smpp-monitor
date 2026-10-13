@@ -81,7 +81,7 @@ def is_true(value):
     return (value or "").strip().lower() in {"1", "true", "set"}
 
 
-def run_tshark(pcap):
+def run_tshark(pcap, suppliers):
     fields = [
         "frame.time_epoch",
         "ip.src",
@@ -97,12 +97,19 @@ def run_tshark(pcap):
         "smpp.sequence_number",
         "smpp.command_status",
     ]
-    command = [
-        "tshark", "-n", "-r", pcap,
+    command = ["tshark", "-n", "-r", pcap]
+
+    # Supplier ports are commonly not the SMPP default port. Force tshark to
+    # decode every configured port as SMPP instead of relying on heuristics.
+    ports = sorted({config["port"] for config in suppliers.values()}, key=int)
+    for port in ports:
+        command.extend(["-d", "tcp.port=={},smpp".format(port)])
+
+    command.extend([
         "-Y", "tcp.flags.reset == 1 || tcp.flags.fin == 1 || "
               "tcp.analysis.retransmission || tcp.analysis.zero_window || smpp",
         "-T", "fields", "-E", "separator=\\t", "-E", "occurrence=f",
-    ]
+    ])
     for field in fields:
         command.extend(["-e", field])
 
@@ -422,7 +429,7 @@ def main():
         return 1
     try:
         suppliers = load_suppliers()
-        findings = analyze(run_tshark(pcap), suppliers)
+        findings = analyze(run_tshark(pcap, suppliers), suppliers)
         if only_supplier is not None:
             if only_supplier not in suppliers:
                 raise RuntimeError("supplier config not found: {}".format(only_supplier))

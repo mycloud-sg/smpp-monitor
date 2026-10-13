@@ -244,7 +244,19 @@ ls -lht captures/ring | head
 
 ```bash
 find state/processed -maxdepth 1 -name '*.done' -mmin -5
+cat state/last-processed.txt
 ```
+
+`last-processed.txt` 中的状态：
+
+| 状态 | 含义 |
+|---|---|
+| `normal` | 最近一个 PCAP 已完成分析，没有发现异常 |
+| `diagnosis_created` | 最近一个 PCAP 已生成诊断和 incident |
+| `failed` | 最近一次分析失败，detector 后续会重试 |
+
+没有 `diagnosis.log` 不一定是故障。该文件只在发现 TCP/SMPP 异常时创建；正常 PCAP
+只产生 `.done`，并更新 `state/last-processed.txt`。
 
 ## 9. 手工分析一个 PCAP
 
@@ -310,6 +322,12 @@ detector worker 启动时找不到 tshark 会直接退出。
 4. tshark 是否能将目标端口识别为 SMPP；
 5. 事件是否处于 300 秒冷却期。
 
+detector 会根据 `smpp_suppliers.conf` 自动将所有配置端口指定为 SMPP。如果仍然没有
+SMPP 报文，检查 PCAP 是否确实包含对应 IP 和端口的双向流量。
+
+如果 `state/last-processed.txt` 持续更新且状态为 `normal`，说明 detector 正常工作，只是
+没有发现满足规则的异常。
+
 ### 正常断连告警太多
 
 启动前设置：
@@ -347,4 +365,3 @@ bash smpp_capture_manager.sh start
 启动新版前，确认旧的 Supplier worker 和 tcpdump 已经停止，避免新旧抓包进程同时运行。
 
 历史 `captures/`、`incidents/` 和 `state/` 是运行数据，不应加入 Git。升级前如需长期保存，请备份到项目目录之外。
-

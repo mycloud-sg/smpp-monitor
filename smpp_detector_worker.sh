@@ -6,6 +6,7 @@ CAPTURE_DIR="$BASE_DIR/captures/ring"
 DETECTOR="$BASE_DIR/smpp_detector.py"
 PID_DIR="$BASE_DIR/pids"
 STATE_DIR="$BASE_DIR/state/processed"
+LAST_PROCESSED_FILE="$BASE_DIR/state/last-processed.txt"
 INCIDENT_DIR="$BASE_DIR/incidents"
 LOG_FILE="$BASE_DIR/detector.log"
 PID_FILE="$PID_DIR/detector.pid"
@@ -36,31 +37,46 @@ process_capture() {
     case "$result" in
         0)
             touch "$done_file"
+            {
+                echo "time=$(date '+%F %T %Z')"
+                echo "status=normal"
+                echo "capture=$capture"
+            } > "$LAST_PROCESSED_FILE"
             ;;
         2)
             log "diagnosis created from $filename"
             touch "$done_file"
+            {
+                echo "time=$(date '+%F %T %Z')"
+                echo "status=diagnosis_created"
+                echo "capture=$capture"
+            } > "$LAST_PROCESSED_FILE"
             ;;
         *)
             log "detector failed capture=$capture result=$result"
             [ -z "$output" ] || log "$output"
+            {
+                echo "time=$(date '+%F %T %Z')"
+                echo "status=failed"
+                echo "capture=$capture"
+                echo "result=$result"
+            } > "$LAST_PROCESSED_FILE"
             ;;
     esac
 }
 
 scan_completed_captures() {
-    local newest capture
-    newest=$(
-        find "$CAPTURE_DIR" -maxdepth 1 -type f \
-            \( -name '*.pcap' -o -name '*.pcapng' \) \
-            -printf '%T@ %p\n' 2>/dev/null \
-        | sort -nr | head -1 | cut -d' ' -f2-
-    )
+    local capture previous=""
 
+    # Take one ordered snapshot. Using separate "newest" and "all files"
+    # queries creates a race when dumpcap rotates between the two queries.
+    # Hold one item back while reading so the last item is never processed.
     while IFS= read -r capture; do
         [ -n "$capture" ] || continue
-        [ "$capture" = "$newest" ] && continue
-        process_capture "$capture"
+        if [ -n "$previous" ] && [ -f "$previous" ]; then
+            process_capture "$previous"
+        fi
+        previous="$capture"
     done < <(
         find "$CAPTURE_DIR" -maxdepth 1 -type f \
             \( -name '*.pcap' -o -name '*.pcapng' \) \

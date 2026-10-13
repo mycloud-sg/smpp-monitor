@@ -146,6 +146,9 @@ detector worker 默认每 15 秒扫描一次 `captures/ring/`：
 
 这不是文件系统事件触发，而是轻量轮询。每次轮询只扫描目录；同一个 PCAP 不会重复执行 tshark。
 
+每轮扫描只获取一次按修改时间排序的文件快照，并始终跳过快照中的最后一个文件。这可以
+避免 dumpcap 恰好在扫描过程中轮转时，新文件被误当作已关闭文件交给 tshark。
+
 分析结果通过退出码返回：
 
 | 退出码 | 含义 | worker 行为 |
@@ -158,7 +161,11 @@ detector worker 默认每 15 秒扫描一次 `captures/ring/`：
 
 ```text
 state/processed/<pcap-file>.done
+state/last-processed.txt
 ```
+
+`last-processed.txt` 记录最近一次处理时间、PCAP 和结果，用于区分“没有异常”和“detector
+没有工作”。
 
 PCAP 被 capture supervisor 清理后，detector worker 会在周期清理时删除失效的 `.done`。
 
@@ -180,6 +187,9 @@ detector 按 TCP stream 和 SMPP sequence number 关联事件
 ```
 
 tshark 负责协议解码；detector 负责业务判断和中文描述。
+
+由于 Supplier 经常使用非标准 SMPP 端口，detector 会根据 `smpp_suppliers.conf` 为每个
+端口显式设置 tshark `decode-as`，不依赖 tshark 的自动协议识别。
 
 当前检测范围：
 
@@ -281,4 +291,3 @@ capture supervisor 停止 dumpcap
 | manager 重复启动 | 根据 PID 文件阻止重复进程 |
 | PCAP 超过保留时间 | capture supervisor 自动删除 |
 | incident 超过保留天数 | detector worker 自动删除 |
-
