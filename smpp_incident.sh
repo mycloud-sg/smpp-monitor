@@ -43,8 +43,14 @@ done
 
 if command -v ss >/dev/null 2>&1; then
     ss -antp > "$WORK_DIR/ss.txt" 2>&1 || true
+    ss -tinp > "$WORK_DIR/ss-tcp-info.txt" 2>&1 || true
 else
     echo "ss command not found" > "$WORK_DIR/ss.txt"
+    echo "ss command not found" > "$WORK_DIR/ss-tcp-info.txt"
+fi
+
+if command -v ip >/dev/null 2>&1; then
+    ip -s link > "$WORK_DIR/ip-link-stats.txt" 2>&1 || true
 fi
 
 tar -C "$INCIDENT_DIR" -czf "$ARCHIVE" "$INCIDENT_ID"

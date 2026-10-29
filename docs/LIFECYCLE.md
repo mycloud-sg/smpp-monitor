@@ -198,10 +198,13 @@ tshark 负责协议解码；detector 负责业务判断和中文描述。
 - TCP 重发达到阈值；
 - 连接一侧暂停接收数据；
 - SMPP bind 失败或解除；
-- `submit_sm_resp` 超过 Supplier 的 timeout；
+- `submit_sm_resp` 超过 Supplier 的 timeout，或到期仍未见响应；
 - `submit_sm_resp` 返回非成功状态。
 
-当前版本只在单个 PCAP 内关联 SMPP 请求和响应。跨 PCAP 的请求响应状态暂不保留。
+未完成的 `submit_sm` 请求保存在 `state/pending-submits.json`，以 Supplier、本地 TCP 端口和
+SMPP sequence number 关联跨 PCAP 的响应。该文件在分析成功后原子更新；到期仍未见响应时
+记录超时事件并移除请求。同一个 TCP 包内的多个 SMPP PDU 会逐个关联。检测时间以抓包中的
+报文时间为准，因此告警可能在下一个已关闭的分钟文件分析后产生。
 
 ## 7. 诊断生命周期
 
@@ -242,6 +245,8 @@ incidents/<incident-id>/
 ├── info.txt
 ├── supplier.conf
 ├── ss.txt
+├── ss-tcp-info.txt
+├── ip-link-stats.txt（系统有 ip 时）
 └── pcap/
     └── 触发文件及之前最多 4 个 PCAP
 ```
@@ -254,7 +259,7 @@ incidents/<incident-id>.tar.gz
 
 诊断卡片中的 PCAP 路径指向 incident 内的副本，而不是会被轮转清理的源文件。
 
-incident 默认保留 7 天。detector worker 每小时检查并清理过期目录和压缩包。
+incident 默认保留 3 天。detector worker 每小时检查并清理过期目录和压缩包。
 
 ## 9. 停止生命周期
 

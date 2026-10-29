@@ -31,7 +31,7 @@ export SMPP_MONITOR_HOME=/root/smpp_monitor
 编辑 `smpp_suppliers.conf`：
 
 ```ini
-[smpp_cm_wa]
+[smpp_cm_wa_2]
 ip=85.119.48.101
 port=30000
 timeout=30
@@ -135,10 +135,10 @@ capture filter: (host 85.119.48.101 and port 30000) or ...
 | `CAPTURE_RETENTION_MINUTES` | `30` | 源 PCAP 保留时间 |
 | `CONFIG_CHECK_INTERVAL` | `5` | Supplier 配置检查周期，单位秒 |
 | `INTERVAL` | `15` | detector 扫描新 PCAP 的周期，单位秒 |
-| `TCP_RETRANSMISSION_THRESHOLD` | `10` | 单个 PCAP 内触发诊断的 TCP 重发数量 |
+| `TCP_RETRANSMISSION_THRESHOLD` | `5` | 单个 PCAP 内同一连接、同一方向触发诊断的 TCP 重发数量 |
 | `INCIDENT_COOLDOWN_SECONDS` | `300` | 同类 incident 冷却时间 |
-| `INCIDENT_RETENTION_DAYS` | `7` | incident 保留天数 |
-| `ALERT_ON_FIN` | `1` | 是否将正常关闭连接作为事故 |
+| `INCIDENT_RETENTION_DAYS` | `3` | incident 保留天数 |
+| `ALERT_ON_FIN` | `0` | 是否将正常关闭连接作为事故 |
 
 示例：保留 60 分钟 PCAP，并关闭正常 FIN 告警：
 
@@ -216,6 +216,8 @@ incidents/20261012-102142-smpp_cm_wa.tar.gz
 | `info.txt` | 时间、Supplier 和服务器信息 |
 | `supplier.conf` | 事故时对应的 Supplier 配置 |
 | `ss.txt` | 事故生成时的 TCP 连接状态 |
+| `ss-tcp-info.txt` | 事故生成时的 TCP 重传、RTT 等连接详情 |
+| `ip-link-stats.txt` | 事故生成时的网卡累计收发与丢包计数（系统有 `ip` 时） |
 | `pcap/` | 触发文件及之前最多 4 个 PCAP |
 
 向供应商提交证据时，通常发送 `.tar.gz` 即可。
@@ -255,6 +257,10 @@ cat state/last-processed.txt
 | `diagnosis_created` | 最近一个 PCAP 已生成诊断和 incident |
 | `failed` | 最近一次分析失败，detector 后续会重试 |
 
+`state/pending-submits.json` 保存尚未收到响应的 `submit_sm`，用于跨分钟文件判断超时。
+不要在 detector 运行期间手工编辑该文件。超时表示本机抓包未见对应响应，需结合 TCP
+重传、ACK 和供应商侧抓包定位原因。
+
 没有 `diagnosis.log` 不一定是故障。该文件只在发现 TCP/SMPP 异常时创建；正常 PCAP
 只产生 `.done`，并更新 `state/last-processed.txt`。
 
@@ -269,7 +275,7 @@ python3 smpp_detector.py captures/ring/<capture>.pcapng
 只生成指定 Supplier 的诊断：
 
 ```bash
-python3 smpp_detector.py smpp_cm_wa captures/ring/<capture>.pcapng
+python3 smpp_detector.py smpp_cm_wa_2 captures/ring/<capture>.pcapng
 ```
 
 退出码：

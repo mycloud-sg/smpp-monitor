@@ -29,6 +29,10 @@ timeout=30
 bash smpp_capture_manager.sh reload
 ```
 
+当前配置覆盖 8 个 SMPP 通道。检测器会跨分钟轮转文件跟踪 `submit_sm`，在配置的
+`timeout` 到期后仍未见 `submit_sm_resp` 时生成诊断；同一 TCP 包中的多个 PDU 也会逐个跟踪。
+超时事件表示本机抓包未见响应，不能单凭事件确定丢包发生在哪一侧。
+
 ## 使用
 
 ```bash
@@ -45,7 +49,7 @@ bash smpp_capture_manager.sh stop
 diagnosis.log          所有事故的中文诊断卡片
 diagnosis-latest.txt   每个 Supplier 最近一次诊断
 diagnosis/             单次诊断文本及机器详情 JSON
-incidents/             PCAP、诊断、配置、连接状态和压缩包
+incidents/             PCAP、诊断、配置、TCP 状态、网卡计数器和压缩包
 captures/ring/         共享轮转 PCAP
 capture.log            抓包进程日志
 detector.log           检测调度日志
@@ -69,14 +73,14 @@ ROTATE_SECONDS=60                    PCAP 切分周期
 SNAPLEN=1024                         每个包保存的最大字节数
 CAPTURE_RETENTION_MINUTES=30         PCAP 按时间保留的分钟数
 INTERVAL=15                          detector 检查新文件的周期
-TCP_RETRANSMISSION_THRESHOLD=10      单个 PCAP 的重发告警阈值
+TCP_RETRANSMISSION_THRESHOLD=5       单个 PCAP 内同一连接、同一方向的重发告警阈值
 INCIDENT_COOLDOWN_SECONDS=300        同类事故冷却时间
-INCIDENT_RETENTION_DAYS=7            incident 保留天数
-ALERT_ON_FIN=1                       是否将正常关闭连接记为事故
+INCIDENT_RETENTION_DAYS=3            incident 保留天数
+ALERT_ON_FIN=0                       是否将正常关闭连接记为事故
 ```
 
-如正常的 SMPP 连接关闭较多，可设置 `ALERT_ON_FIN=0`，只保留强制断开、传输异常和
-SMPP 错误告警。
+如需把正常的 SMPP 连接关闭也记为事故，可设置 `ALERT_ON_FIN=1`。默认只保留强制断开、
+传输异常和 SMPP 错误告警。
 
 ## 诊断职责
 

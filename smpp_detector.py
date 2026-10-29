@@ -21,9 +21,10 @@ DIAGNOSIS_LOG = os.path.join(BASE_DIR, "diagnosis.log")
 DIAGNOSIS_LATEST = os.path.join(BASE_DIR, "diagnosis-latest.txt")
 LATEST_DIR = os.path.join(BASE_DIR, "state", "latest")
 COOLDOWN_DIR = os.path.join(BASE_DIR, "state", "cooldown")
+PENDING_FILE = os.path.join(BASE_DIR, "state", "pending-submits.json")
 INCIDENT_SCRIPT = os.path.join(BASE_DIR, "smpp_incident.sh")
 
-RETRANSMISSION_THRESHOLD = int(os.environ.get("TCP_RETRANSMISSION_THRESHOLD", "10"))
+RETRANSMISSION_THRESHOLD = int(os.environ.get("TCP_RETRANSMISSION_THRESHOLD", "5"))
 INCIDENT_COOLDOWN_SECONDS = int(os.environ.get("INCIDENT_COOLDOWN_SECONDS", "300"))
 ALERT_ON_FIN = os.environ.get("ALERT_ON_FIN", "0") != "0"
 
@@ -106,9 +107,11 @@ def run_tshark(pcap, suppliers):
         command.extend(["-d", "tcp.port=={},smpp".format(port)])
 
     command.extend([
-        "-Y", "tcp.flags.reset == 1 || tcp.flags.fin == 1 || "
-              "tcp.analysis.retransmission || tcp.analysis.zero_window || smpp",
-        "-T", "fields", "-E", "separator=\\t", "-E", "occurrence=f",
+        # Include every captured TCP frame so a quiet connection still advances
+        # the capture clock used to expire unanswered submit_sm requests.
+        "-Y", "tcp",
+        "-T", "fields", "-E", "separator=/t", "-E", "occurrence=a",
+        "-E", "aggregator=,",
     ])
     for field in fields:
         command.extend(["-e", field])
@@ -141,9 +144,12 @@ def event(event_type, layer, timestamp, **details):
     return value
 
 
-def analyze(lines, suppliers):
-    submits = {}
+def analyze(lines, suppliers, pending=None, capture_end=None):
+    # TCP stream numbers are local to each PCAP. The local TCP port plus the
+    # SMPP sequence number remains stable across minute-sized rotations.
+    pending = dict(pending or {})
     results = {name: {"events": [], "retransmissions": []} for name in suppliers}
+    latest_timestamp = 0
 
     for line in lines:
         row = line.split("\t")
@@ -152,74 +158,136 @@ def analyze(lines, suppliers):
             timestamp = float(row[0])
         except ValueError:
             continue
+        latest_timestamp = max(latest_timestamp, timestamp)
 
         supplier, direction = supplier_for_packet(row, suppliers)
         if not supplier:
             continue
 
-        stream = row[5]
         reset = is_true(row[6])
         fin = is_true(row[7])
         retransmission = is_true(row[8])
         zero_window = is_true(row[9])
-        command_id = normalize_number(row[10])
-        sequence = row[11].strip()
-        command_status = normalize_number(row[12])
         bucket = results[supplier]
+        local_port = row[3] if direction == "local_to_supplier" else row[4]
 
         if reset:
             source = "supplier" if direction == "supplier_to_local" else "local"
-            bucket["events"].append(event("TCP_RESET", "TCP", timestamp, source=source))
+            bucket["events"].append(event("TCP_RESET", "TCP", timestamp,
+                                          source=source, local_port=local_port))
         if fin and ALERT_ON_FIN:
             source = "supplier" if direction == "supplier_to_local" else "local"
-            bucket["events"].append(event("TCP_CLOSED", "TCP", timestamp, source=source))
+            bucket["events"].append(event("TCP_CLOSED", "TCP", timestamp,
+                                          source=source, local_port=local_port))
         if retransmission:
-            bucket["retransmissions"].append(timestamp)
+            bucket["retransmissions"].append((timestamp, local_port, direction))
         if zero_window:
             source = "supplier" if direction == "supplier_to_local" else "local"
-            bucket["events"].append(event("TCP_RECEIVE_BLOCKED", "TCP", timestamp, source=source))
+            bucket["events"].append(event("TCP_RECEIVE_BLOCKED", "TCP", timestamp,
+                                          source=source, local_port=local_port))
 
-        if command_id is None or not sequence:
-            continue
-
-        key = (supplier, stream, sequence)
-        if command_id == SUBMIT_SM:
-            submits[key] = timestamp
-        elif command_id == SUBMIT_SM_RESP:
-            submit_time = submits.get(key)
-            if submit_time is None:
+        commands = row[10].split(",") if row[10] else []
+        sequences = row[11].split(",") if row[11] else []
+        statuses = row[12].split(",") if row[12] else []
+        status_index = 0
+        for index, raw_command in enumerate(commands):
+            command_id = normalize_number(raw_command)
+            sequence = sequences[index].strip() if index < len(sequences) else ""
+            if command_id is None or not sequence:
                 continue
-            delay = timestamp - submit_time
-            timeout = suppliers[supplier]["timeout"]
-            if delay >= timeout:
+            # tshark emits command_status only for response PDUs, so this list
+            # is shorter than commands in a mixed request/response TCP segment.
+            command_status = None
+            if command_id & 0x80000000:
+                if status_index < len(statuses):
+                    command_status = normalize_number(statuses[status_index])
+                status_index += 1
+
+            key = "|".join((supplier, local_port, sequence))
+            if command_id == SUBMIT_SM and direction == "local_to_supplier":
+                if not retransmission:
+                    pending.setdefault(key, timestamp)
+            elif command_id == SUBMIT_SM_RESP and direction == "supplier_to_local":
+                submit_time = pending.pop(key, None)
+                if submit_time is not None:
+                    delay = timestamp - submit_time
+                    timeout = suppliers[supplier]["timeout"]
+                    if delay >= timeout:
+                        bucket["events"].append(
+                            event("SMPP_RESP_TIMEOUT", "SMPP", timestamp,
+                                  sequence=sequence, local_port=local_port,
+                                  delay=round(delay, 3), timeout=timeout,
+                                  response_seen=True)
+                        )
+                if command_status not in (None, 0):
+                    bucket["events"].append(
+                        event("SMPP_SUBMIT_FAILED", "SMPP", timestamp,
+                              sequence=sequence, status=STATUS_MAP.get(command_status, hex(command_status)),
+                              status_code=hex(command_status))
+                    )
+            elif command_id in BIND_RESPONSES and command_status not in (None, 0):
                 bucket["events"].append(
-                    event("SMPP_RESP_TIMEOUT", "SMPP", timestamp,
-                          sequence=sequence, delay=round(delay, 3), timeout=timeout)
-                )
-            if command_status not in (None, 0):
-                bucket["events"].append(
-                    event("SMPP_SUBMIT_FAILED", "SMPP", timestamp,
-                          sequence=sequence, status=STATUS_MAP.get(command_status, hex(command_status)),
+                    event("SMPP_BIND_FAILED", "SMPP", timestamp,
+                          status=STATUS_MAP.get(command_status, hex(command_status)),
                           status_code=hex(command_status))
                 )
-        elif command_id in BIND_RESPONSES and command_status not in (None, 0):
-            bucket["events"].append(
-                event("SMPP_BIND_FAILED", "SMPP", timestamp,
-                      status=STATUS_MAP.get(command_status, hex(command_status)),
-                      status_code=hex(command_status))
+            elif command_id == UNBIND:
+                source = "supplier" if direction == "supplier_to_local" else "local"
+                bucket["events"].append(event("SMPP_BIND_LOST", "SMPP", timestamp, source=source))
+
+    if not latest_timestamp and capture_end is not None:
+        latest_timestamp = capture_end
+    for key, submit_time in list(pending.items()):
+        name, local_port, sequence = key.split("|", 2)
+        if name not in suppliers:
+            del pending[key]
+            continue
+        timeout = suppliers[name]["timeout"]
+        if latest_timestamp - submit_time >= timeout:
+            results[name]["events"].append(
+                event("SMPP_RESP_TIMEOUT", "SMPP", submit_time + timeout,
+                      sequence=sequence, local_port=local_port,
+                      delay=round(latest_timestamp - submit_time, 3),
+                      timeout=timeout, response_seen=False)
             )
-        elif command_id == UNBIND:
-            source = "supplier" if direction == "supplier_to_local" else "local"
-            bucket["events"].append(event("SMPP_BIND_LOST", "SMPP", timestamp, source=source))
+            del pending[key]
 
     for bucket in results.values():
-        times = bucket.pop("retransmissions")
-        if len(times) >= RETRANSMISSION_THRESHOLD:
-            bucket["events"].append(
-                event("TCP_RETRANSMISSION", "TCP", min(times),
-                      end_time=max(times), count=len(times))
-            )
-    return {name: value["events"] for name, value in results.items() if value["events"]}
+        groups = {}
+        for timestamp, local_port, direction in bucket.pop("retransmissions"):
+            groups.setdefault((local_port, direction), []).append(timestamp)
+        for (local_port, direction), times in groups.items():
+            if len(times) >= RETRANSMISSION_THRESHOLD:
+                source = "local" if direction == "local_to_supplier" else "supplier"
+                bucket["events"].append(
+                    event("TCP_RETRANSMISSION", "TCP", min(times),
+                          end_time=max(times), count=len(times),
+                          local_port=local_port, source=source)
+                )
+    findings = {name: value["events"] for name, value in results.items() if value["events"]}
+    return findings, pending
+
+
+def load_pending():
+    try:
+        with open(PENDING_FILE, "r") as file_obj:
+            value = json.load(file_obj)
+        if isinstance(value, dict):
+            return {key: float(timestamp) for key, timestamp in value.items()
+                    if isinstance(key, str) and key.count("|") == 2}
+    except FileNotFoundError:
+        return {}
+    except (ValueError, TypeError) as exc:
+        raise RuntimeError("invalid pending submit state: {}".format(exc))
+    raise RuntimeError("invalid pending submit state: expected object")
+
+
+def save_pending(pending):
+    os.makedirs(os.path.dirname(PENDING_FILE), exist_ok=True)
+    temporary = PENDING_FILE + ".tmp"
+    with open(temporary, "w") as file_obj:
+        json.dump(pending, file_obj)
+    os.replace(temporary, PENDING_FILE)
 
 
 def select_evidence_pcaps(trigger_pcap, limit=5):
@@ -255,16 +323,16 @@ def describe(events):
         supplier_reset = any(item["type"] == "TCP_RESET" and item.get("source") == "supplier"
                              for item in events)
         if supplier_reset:
-            descriptions.append("与供应商的连接被供应商一侧强制断开。")
+            descriptions.append("抓包看到来源为供应商地址的 RST，连接被复位。")
         else:
-            descriptions.append("与供应商的连接被本机一侧强制断开。")
+            descriptions.append("抓包看到本机发出的 RST，连接被复位。")
     if "TCP_CLOSED" in types:
         supplier_close = any(item["type"] == "TCP_CLOSED" and item.get("source") == "supplier"
                              for item in events)
         if supplier_close:
-            descriptions.append("供应商一侧关闭了网络连接。")
+            descriptions.append("抓包看到来源为供应商地址的 FIN，连接开始关闭。")
         else:
-            descriptions.append("本机一侧关闭了网络连接。")
+            descriptions.append("抓包看到本机发出的 FIN，连接开始关闭。")
     if "TCP_RETRANSMISSION" in types:
         count = max(item.get("count", 0) for item in events
                     if item["type"] == "TCP_RETRANSMISSION")
@@ -280,7 +348,11 @@ def describe(events):
     if "SMPP_RESP_TIMEOUT" in types:
         timeout = next(item.get("timeout", 30) for item in events
                        if item["type"] == "SMPP_RESP_TIMEOUT")
-        descriptions.append("submit_sm 已发送，但响应时间超过了 {} 秒。".format(timeout))
+        if any(item.get("response_seen") is False for item in events
+               if item["type"] == "SMPP_RESP_TIMEOUT"):
+            descriptions.append("submit_sm 发出后超过 {} 秒，抓包中仍未见对应响应。".format(timeout))
+        else:
+            descriptions.append("submit_sm 已发送，但响应时间超过了 {} 秒。".format(timeout))
     if "SMPP_SUBMIT_FAILED" in types:
         status = next(item.get("status", "未知原因") for item in events
                       if item["type"] == "SMPP_SUBMIT_FAILED")
@@ -297,13 +369,13 @@ def describe(events):
         layer = "SMPP"
 
     if "TCP_RESET" in types or "TCP_CLOSED" in types:
-        supplier_side = any(item.get("source") == "supplier" for item in events
-                            if item["type"] in {"TCP_RESET", "TCP_CLOSED"})
-        location = "优先排查供应商侧。" if supplier_side else "优先排查本机应用或本机网络。"
+        location = "需对照两端抓包及中间设备日志，确认连接关闭的触发原因。"
     elif has_tcp:
         location = "疑似本机与供应商之间的网络链路问题。"
     elif "SMPP_SUBMIT_FAILED" in types or "SMPP_BIND_FAILED" in types:
         location = "供应商 SMPP 服务返回了明确失败结果。"
+    elif "SMPP_RESP_TIMEOUT" in types:
+        location = "单侧抓包无法判定请求或响应丢失的位置，需结合 TCP 状态和对端抓包。"
     else:
         location = "疑似供应商 SMPP 服务处理异常，当前证据不足以完全排除网络问题。"
 
@@ -429,7 +501,9 @@ def main():
         return 1
     try:
         suppliers = load_suppliers()
-        findings = analyze(run_tshark(pcap, suppliers), suppliers)
+        pending = load_pending() if only_supplier is None else {}
+        findings, pending = analyze(run_tshark(pcap, suppliers), suppliers, pending,
+                                    capture_end=os.path.getmtime(pcap))
         if only_supplier is not None:
             if only_supplier not in suppliers:
                 raise RuntimeError("supplier config not found: {}".format(only_supplier))
@@ -437,6 +511,8 @@ def main():
                         if only_supplier in findings else {})
         for supplier, events in findings.items():
             handle_diagnosis(supplier, suppliers[supplier], events, pcap)
+        if only_supplier is None:
+            save_pending(pending)
         return 2 if findings else 0
     except (OSError, RuntimeError, ValueError) as exc:
         print("detector error: {}".format(exc), file=sys.stderr)
