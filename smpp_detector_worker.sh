@@ -20,9 +20,14 @@ echo $$ > "$PID_FILE"
 
 log() { echo "$(date '+%F %T') $*" >> "$LOG_FILE"; }
 
+# A restart may already have started a new worker; only remove our own PID file.
+release_pid_file() {
+    [ "$(cat "$PID_FILE" 2>/dev/null)" = "$$" ] && rm -f "$PID_FILE"
+}
+
 cleanup() {
     log "detector worker stopped"
-    rm -f "$PID_FILE"
+    release_pid_file
     exit 0
 }
 trap cleanup TERM INT
@@ -116,7 +121,7 @@ periodic_cleanup() {
 
 if ! command -v tshark >/dev/null 2>&1; then
     log "tshark not found"
-    rm -f "$PID_FILE"
+    release_pid_file
     exit 1
 fi
 
@@ -124,5 +129,7 @@ log "detector worker started interval=${INTERVAL}s"
 while true; do
     scan_completed_captures
     periodic_cleanup
-    sleep "$INTERVAL"
+    # Background sleep + wait lets the TERM trap run at once instead of after the sleep.
+    sleep "$INTERVAL" &
+    wait $!
 done

@@ -125,7 +125,8 @@ cleanup_expired_captures() {
 cleanup() {
     log "stopping capture supervisor"
     stop_dumpcap
-    rm -f "$PID_FILE"
+    # A restart may already have started a new worker; only remove our own PID file.
+    [ "$(cat "$PID_FILE" 2>/dev/null)" = "$$" ] && rm -f "$PID_FILE"
     exit 0
 }
 request_reload() { reload_requested=1; }
@@ -138,7 +139,8 @@ while true; do
     if [ "$reload_requested" -eq 1 ] || [ "$current_signature" != "$config_signature" ]; then
         reload_requested=0
         if ! restart_dumpcap; then
-            sleep "$CONFIG_CHECK_INTERVAL"
+            sleep "$CONFIG_CHECK_INTERVAL" &
+            wait $!
             continue
         fi
     elif [ -z "$dumpcap_pid" ] || ! kill -0 "$dumpcap_pid" 2>/dev/null; then
@@ -146,5 +148,7 @@ while true; do
         start_dumpcap || true
     fi
     cleanup_expired_captures
-    sleep "$CONFIG_CHECK_INTERVAL"
+    # Background sleep + wait lets TERM/HUP traps run at once.
+    sleep "$CONFIG_CHECK_INTERVAL" &
+    wait $!
 done

@@ -48,10 +48,16 @@ stop_one() {
     pid=$(cat "$pid_file")
     echo "stop $name pid=$pid"
     kill "$pid" 2>/dev/null || true
-    while kill -0 "$pid" 2>/dev/null && [ "$count" -lt 20 ]; do
+    while kill -0 "$pid" 2>/dev/null && [ "$count" -lt 120 ]; do
         sleep 0.25
         count=$((count + 1))
     done
+    # Keep the PID file if it is still alive, so start reports "already running"
+    # instead of launching a second worker next to it.
+    if kill -0 "$pid" 2>/dev/null; then
+        echo "$name pid=$pid still running after 30s; not removing $pid_file" >&2
+        return 1
+    fi
     rm -f "$pid_file"
 }
 
