@@ -131,7 +131,7 @@ capture filter: (host 85.119.48.101 and port 30000) or ...
 |---|---:|---|
 | `INTERFACE` | `any` | dumpcap 抓包网卡 |
 | `ROTATE_SECONDS` | `60` | 每个 PCAP 的时间长度 |
-| `SNAPLEN` | `1024` | 每个网络包最多保存的字节数 |
+| `SNAPLEN` | `0` | 每个网络包最多保存的字节数，`0` 表示完整保存。不建议调小：截断的报文会导致 SMPP 响应无法解码 |
 | `CAPTURE_RETENTION_MINUTES` | `30` | 源 PCAP 保留时间 |
 | `CONFIG_CHECK_INTERVAL` | `5` | Supplier 配置检查周期，单位秒 |
 | `INTERVAL` | `15` | detector 扫描新 PCAP 的周期，单位秒 |
@@ -260,6 +260,10 @@ cat state/last-processed.txt
 `state/pending-submits.json` 保存尚未收到响应的 `submit_sm`，用于跨分钟文件判断超时。
 不要在 detector 运行期间手工编辑该文件。超时表示本机抓包未见对应响应，需结合 TCP
 重传、ACK 和供应商侧抓包定位原因。
+
+如果 `submit_sm` 之后同一连接上出现 tshark 无法完整解码的供应商数据（报文被 `SNAPLEN`
+截断，或旧版 tshark 在截断后丢失 TCP 重组同步而不再输出 SMPP 字段），响应可能就在
+其中，detector 会放弃跟踪该连接上之前的 `submit_sm`，不再报告“未见对应响应”。
 
 没有 `diagnosis.log` 不一定是故障。该文件只在发现 TCP/SMPP 异常时创建；正常 PCAP
 只产生 `.done`，并更新 `state/last-processed.txt`。

@@ -97,6 +97,9 @@ def run_tshark(pcap, suppliers):
         "smpp.command_id",
         "smpp.sequence_number",
         "smpp.command_status",
+        "tcp.len",
+        "frame.len",
+        "frame.cap_len",
     ]
     command = ["tshark", "-n", "-r", pcap]
 
@@ -153,7 +156,7 @@ def analyze(lines, suppliers, pending=None, capture_end=None):
 
     for line in lines:
         row = line.split("\t")
-        row += [""] * (13 - len(row))
+        row += [""] * (16 - len(row))
         try:
             timestamp = float(row[0])
         except ValueError:
@@ -234,6 +237,23 @@ def analyze(lines, suppliers, pending=None, capture_end=None):
             elif command_id == UNBIND:
                 source = "supplier" if direction == "supplier_to_local" else "local"
                 bucket["events"].append(event("SMPP_BIND_LOST", "SMPP", timestamp, source=source))
+
+        # Supplier data that tshark could not fully decode may carry the
+        # submit_sm_resp: the segment was cut by the capture snaplen, or tshark
+        # (notably 2.x) lost TCP reassembly sync after such a cut and reports
+        # every later segment of the connection without SMPP fields. The
+        # capture then cannot prove earlier submits on this connection went
+        # unanswered, so stop tracking them instead of expiring them later.
+        payload = normalize_number(row[13]) or 0
+        wire_length = normalize_number(row[14])
+        captured_length = normalize_number(row[15])
+        truncated = (wire_length is not None and captured_length is not None
+                     and captured_length < wire_length)
+        if direction == "supplier_to_local" and payload > 0 and (truncated or not commands):
+            prefix = "|".join((supplier, local_port, ""))
+            for key in [key for key, submit_time in pending.items()
+                        if key.startswith(prefix) and submit_time <= timestamp]:
+                del pending[key]
 
     if not latest_timestamp and capture_end is not None:
         latest_timestamp = capture_end

@@ -7,9 +7,10 @@ SUPPLIERS = {"supplier": {"ip": "85.119.48.101", "port": "30000", "timeout": 30}
 
 
 def packet(time, src, dst, srcport, dstport, command="", sequence="", status="",
-           retransmission=""):
+           retransmission="", payload="", length="", captured=""):
     fields = [str(time), src, dst, str(srcport), str(dstport), "0", "0", "0",
-              retransmission, "0", command, sequence, status]
+              retransmission, "0", command, sequence, status,
+              str(payload), str(length), str(captured)]
     return "\t".join(fields)
 
 
@@ -72,6 +73,43 @@ class DetectorTest(unittest.TestCase):
         self.assertEqual(pending, {})
         self.assertEqual(findings["supplier"][0]["type"], "SMPP_SUBMIT_FAILED")
         self.assertEqual(findings["supplier"][0]["status"], "ESME_RTHROTTLED")
+
+    def test_undecoded_supplier_segment_cancels_pending_request(self):
+        # tshark 2.x after a snaplen-truncated segment: the response frame is
+        # reported as "TCP segment of a reassembled PDU" without SMPP fields.
+        request = packet(100, "172.31.30.172", "85.119.48.101", 26840, 30000,
+                         "0x00000004", "11", "")
+        other_connection = packet(100, "172.31.30.172", "85.119.48.101", 42400, 30000,
+                                  "0x00000004", "12", "")
+        undecoded = packet(100.5, "85.119.48.101", "172.31.30.172", 30000, 26840,
+                           payload=49, length=117, captured=117)
+        later_request = packet(101, "172.31.30.172", "85.119.48.101", 26840, 30000,
+                               "0x00000004", "13", "")
+        _, pending = detector.analyze([request, other_connection, undecoded, later_request],
+                                      SUPPLIERS)
+        self.assertEqual(sorted(pending), ["supplier|26840|13", "supplier|42400|12"])
+
+        tick = packet(131, "172.31.30.172", "85.119.48.101", 26840, 30000, payload=0)
+        findings, pending = detector.analyze([tick], SUPPLIERS, pending)
+        self.assertEqual(sorted(event["sequence"] for event in findings["supplier"]),
+                         ["12", "13"])
+        self.assertEqual(pending, {})
+
+    def test_truncated_supplier_segment_cancels_pending_request(self):
+        request = packet(100, "172.31.30.172", "85.119.48.101", 26840, 30000,
+                         "0x00000004", "11", "")
+        truncated = packet(101, "85.119.48.101", "172.31.30.172", 30000, 26840,
+                           "0x00000005", "7", "", payload=1448, length=1516, captured=1024)
+        _, pending = detector.analyze([request, truncated], SUPPLIERS)
+        self.assertEqual(pending, {})
+
+    def test_empty_ack_from_supplier_keeps_pending_request(self):
+        request = packet(100, "172.31.30.172", "85.119.48.101", 26840, 30000,
+                         "0x00000004", "11", "")
+        ack = packet(100.1, "85.119.48.101", "172.31.30.172", 30000, 26840,
+                     payload=0, length=68, captured=68)
+        _, pending = detector.analyze([request, ack], SUPPLIERS)
+        self.assertEqual(list(pending), ["supplier|26840|11"])
 
     def test_retransmissions_are_counted_per_connection(self):
         mixed = [packet(100 + i, "172.31.30.172", "85.119.48.101",

@@ -70,7 +70,7 @@ ls -lht incidents | head
 ```text
 INTERFACE=any                         抓包网卡
 ROTATE_SECONDS=60                    PCAP 切分周期
-SNAPLEN=1024                         每个包保存的最大字节数
+SNAPLEN=0                            每个包保存的最大字节数，0 表示完整保存
 CAPTURE_RETENTION_MINUTES=30         PCAP 按时间保留的分钟数
 INTERVAL=15                          detector 检查新文件的周期
 TCP_RETRANSMISSION_THRESHOLD=5       单个 PCAP 内同一连接、同一方向的重发告警阈值

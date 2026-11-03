@@ -9,7 +9,7 @@ PID_FILE="$PID_DIR/capture.pid"
 DUMPCAP_PID_FILE="$PID_DIR/capture.dumpcap.pid"
 INTERFACE="${INTERFACE:-any}"
 ROTATE_SECONDS="${ROTATE_SECONDS:-60}"
-SNAPLEN="${SNAPLEN:-1024}"
+SNAPLEN="${SNAPLEN:-0}"  # 0 = full packets; truncation breaks SMPP decoding
 CONFIG_CHECK_INTERVAL="${CONFIG_CHECK_INTERVAL:-5}"
 CAPTURE_RETENTION_MINUTES="${CAPTURE_RETENTION_MINUTES:-30}"
 # Internal cadence; retention is the only user-facing cleanup setting.
