@@ -55,3 +55,13 @@ fi
 
 tar -C "$INCIDENT_DIR" -czf "$ARCHIVE" "$INCIDENT_ID"
 echo "incident created: $ARCHIVE"
+
+# Optional copy for the web backend. The archive above is already complete;
+# a non-zero exit only makes the detector log this script's output.
+if [ -n "${EXPORT_DIR:-}" ]; then
+    if ! python3 "$BASE_DIR/smpp_incident_export.py" "$EXPORT_DIR" "$INCIDENT_ID" \
+        "$WORK_DIR/details.json" "$WORK_DIR/diagnosis.txt" "$ARCHIVE" 2>&1; then
+        echo "incident export failed: $INCIDENT_ID"
+        exit 1
+    fi
+fi

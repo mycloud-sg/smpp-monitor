@@ -495,7 +495,11 @@ def handle_diagnosis(supplier, config, events, trigger_pcap):
     with open(diagnosis_path, "w") as file_obj:
         file_obj.write(card)
     with open(details_path, "w") as file_obj:
-        json.dump({"supplier": supplier, "pcap": trigger_pcap, "events": events},
+        json.dump({"incident_id": incident_id, "supplier": supplier,
+                   "target": "{}:{}".format(config["ip"], config["port"]),
+                   "start": start, "end": end, "layer": layer,
+                   "descriptions": descriptions, "location": location,
+                   "pcap": trigger_pcap, "events": events},
                   file_obj, ensure_ascii=False, indent=2)
     with open(DIAGNOSIS_LOG, "a") as file_obj:
         file_obj.write(card)

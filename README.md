@@ -77,6 +77,8 @@ TCP_RETRANSMISSION_THRESHOLD=5       单个 PCAP 内同一连接、同一方向�
 INCIDENT_COOLDOWN_SECONDS=300        同类事故冷却时间
 INCIDENT_RETENTION_DAYS=3            incident 保留天数
 ALERT_ON_FIN=0                       是否将正常关闭连接记为事故
+EXPORT_DIR=                          非空时把 incident 复制到该目录供 Web 后台下载
+EXPORT_GROUP=www                     导出文件的属组（权限 0640）
 ```
 
 如需把正常的 SMPP 连接关闭也记为事故，可设置 `ALERT_ON_FIN=1`。默认只保留强制断开、

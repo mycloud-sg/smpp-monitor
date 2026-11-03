@@ -139,6 +139,8 @@ capture filter: (host 85.119.48.101 and port 30000) or ...
 | `INCIDENT_COOLDOWN_SECONDS` | `300` | 同类 incident 冷却时间 |
 | `INCIDENT_RETENTION_DAYS` | `3` | incident 保留天数 |
 | `ALERT_ON_FIN` | `0` | 是否将正常关闭连接作为事故 |
+| `EXPORT_DIR` | 空 | 非空时把每个 incident 的压缩包和摘要 JSON 复制到该目录，供 Web 后台读取；同样按 `INCIDENT_RETENTION_DAYS` 清理 |
+| `EXPORT_GROUP` | `www` | 导出文件的属组，文件权限为 `0640`，只有该组可读 |
 
 示例：保留 60 分钟 PCAP，并关闭正常 FIN 告警：
 
@@ -149,6 +151,21 @@ bash smpp_capture_manager.sh start
 ```
 
 如果通过 systemd、Supervisor 或其他服务管理器启动，需要在对应服务配置中设置环境变量。
+
+### 导出到 Web 后台
+
+aurora 后台受 `open_basedir=/www/wwwroot/aurora/:/tmp/` 限制，读不到本项目的 `incidents/`，
+软链接也会被拒绝，所以由本项目把文件复制进去：
+
+```bash
+export EXPORT_DIR=/www/wwwroot/aurora/runtime/smpp_incidents
+export EXPORT_GROUP=www
+bash smpp_capture_manager.sh restart
+```
+
+每个 incident 导出 `<事故编号>.tar.gz` 和 `<事故编号>.json`（摘要和诊断全文），先写临时文件再改名，
+后台不会读到写了一半的文件。目录不能放在 `public/` 下：PCAP 中有 SMPP bind 的明文账号密码，
+必须经过后台登录才能下载。导出失败不影响本地 incident，错误会写进 `detector.log`。
 
 ## 6. 查看诊断
 
