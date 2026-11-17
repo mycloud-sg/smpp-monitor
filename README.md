@@ -65,7 +65,7 @@ ls -lht incidents | head
 
 ## 可调参数
 
-启动前通过环境变量设置：
+写进 `smpp_monitor.env`（参考 `smpp_monitor.env.example`，manager 每次启动都会读取），或启动前通过环境变量设置（优先）：
 
 ```text
 INTERFACE=any                         抓包网卡
@@ -78,6 +78,11 @@ INCIDENT_COOLDOWN_SECONDS=300        同类事故冷却时间
 INCIDENT_RETENTION_DAYS=3            incident 保留天数
 ALERT_ON_FIN=0                       是否将正常关闭连接记为事故
 EXPORT_DIR=                          非空时把 incident 复制到该目录供 Web 后台下载
+NETPROBE=1                           事故触发时后台采集 mtr / ss 现场证据，0 关闭
+NETPROBE_MTR_COUNT=100               mtr 探测次数（TCP 到业务端口、ICMP 各一份，并行）
+NETPROBE_MTR_INTERVAL=0.5            mtr 探测间隔秒数
+NETPROBE_SS_SECONDS=120              ss -tin 采样总时长
+NETPROBE_SS_INTERVAL=2               ss -tin 采样间隔秒数
 EXPORT_GROUP=www                     导出文件的属组（权限 0640）
 ```
 
@@ -98,3 +103,21 @@ EXPORT_GROUP=www                     导出文件的属组（权限 0640）
 
 - [生命周期说明](docs/LIFECYCLE.md)
 - [部署与使用说明](docs/USAGE.md)
+
+## 现场网络证据（netprobe）
+
+`smpp_incident.sh` 生成事故包后，会以后台进程启动 `smpp_netprobe.sh`（不阻塞 detector），
+结果写入 `incidents/<id>/net/`，完成后重新打包 `<id>.tar.gz`（配置了 `EXPORT_DIR` 时同时重新导出）：
+
+```text
+mtr-tcp.txt          mtr TCP 模式，探测供应商真实端口（与业务流量同协议）
+mtr-icmp.txt         mtr ICMP 模式，同一路径对照（区分真实转发丢包与路由器 ICMP 限速）
+ss-series.txt        每 NETPROBE_SS_INTERVAL 秒一次 ss -tin（rtt / rto / cwnd / retrans / Send-Q）
+nstat-start/end.txt  系统 TCP 计数器起止快照
+route.txt            到供应商的路由
+ip-link-stats-end.txt 结束时网卡计数器
+```
+
+同一 `ip:port` 同时只跑一个 netprobe（`locks/netprobe-<ip>-<port>.lock`），被跳过时写 `net/skipped.txt`。
+默认约 2 分钟完成，期间事故包内暂时还没有 `net/`。
+

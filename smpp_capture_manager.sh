@@ -2,6 +2,24 @@
 set -u
 
 BASE_DIR="${SMPP_MONITOR_HOME:-$(cd "$(dirname "$0")" && pwd)}"
+
+# Per-host settings (EXPORT_DIR, retention, thresholds...) live in this file so
+# a plain `restart` from any shell keeps them. Values already set in the
+# environment win over the file.
+ENV_FILE="${SMPP_MONITOR_ENV:-$BASE_DIR/smpp_monitor.env}"
+if [ -f "$ENV_FILE" ]; then
+    while IFS='=' read -r key value; do
+        case "$key" in ''|\#*) continue ;; esac
+        key="${key//[[:space:]]/}"
+        value="${value#"${value%%[![:space:]]*}"}"
+        value="${value%"${value##*[![:space:]]}"}"
+        [[ "$key" =~ ^[A-Z_][A-Z0-9_]*$ ]] || continue
+        if [ -z "${!key+x}" ]; then
+            export "$key=$value"
+        fi
+    done < "$ENV_FILE"
+fi
+
 PID_DIR="$BASE_DIR/pids"
 CAPTURE_WORKER="$BASE_DIR/smpp_capture_worker.sh"
 DETECTOR_WORKER="$BASE_DIR/smpp_detector_worker.sh"

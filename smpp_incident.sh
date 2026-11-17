@@ -56,6 +56,18 @@ fi
 tar -C "$INCIDENT_DIR" -czf "$ARCHIVE" "$INCIDENT_ID"
 echo "incident created: $ARCHIVE"
 
+# Live network evidence (mtr TCP/ICMP + ss series) takes a few minutes, so it
+# runs detached and rebuilds the archive when done. All fds are redirected so
+# the detector's subprocess.run does not wait for it.
+if [ "${NETPROBE:-1}" != "0" ]; then
+    TARGET_IP=$(awk -F= '$1=="ip"{print $2}' "$WORK_DIR/supplier.conf")
+    TARGET_PORT=$(awk -F= '$1=="port"{print $2}' "$WORK_DIR/supplier.conf")
+    if [ -n "$TARGET_IP" ] && [ -n "$TARGET_PORT" ]; then
+        setsid bash "$BASE_DIR/smpp_netprobe.sh" "$INCIDENT_ID" "$TARGET_IP" "$TARGET_PORT" \
+            </dev/null >"$WORK_DIR/netprobe.log" 2>&1 &
+    fi
+fi
+
 # Optional copy for the web backend. The archive above is already complete;
 # a non-zero exit only makes the detector log this script's output.
 if [ -n "${EXPORT_DIR:-}" ]; then

@@ -26,3 +26,6 @@ incidents/
 pids/
 locks/
 state/
+
+# Host-specific settings
+smpp_monitor.env

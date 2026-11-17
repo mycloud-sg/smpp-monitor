@@ -157,11 +157,16 @@ bash smpp_capture_manager.sh start
 aurora 后台受 `open_basedir=/www/wwwroot/aurora/:/tmp/` 限制，读不到本项目的 `incidents/`，
 软链接也会被拒绝，所以由本项目把文件复制进去：
 
+写进 `smpp_monitor.env`（不进 git，参考 `smpp_monitor.env.example`），`smpp_capture_manager.sh`
+每次 start / restart 都会读取，不依赖当前 shell 是否 export 过：
+
 ```bash
-export EXPORT_DIR=/www/wwwroot/aurora/runtime/smpp_incidents
-export EXPORT_GROUP=www
+cp smpp_monitor.env.example smpp_monitor.env   # 内含 EXPORT_DIR / EXPORT_GROUP
 bash smpp_capture_manager.sh restart
 ```
+
+shell 里已设置的同名变量优先于文件。只在 shell 里 `export EXPORT_DIR` 的做法，换个终端
+`restart` 就会丢失，导出静默停止。
 
 每个 incident 导出 `<事故编号>.tar.gz` 和 `<事故编号>.json`（摘要和诊断全文），先写临时文件再改名，
 后台不会读到写了一半的文件。目录不能放在 `public/` 下：PCAP 中有 SMPP bind 的明文账号密码，
