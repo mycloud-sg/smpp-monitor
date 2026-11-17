@@ -34,7 +34,7 @@ trap cleanup TERM INT
 
 process_capture() {
     local capture="$1" filename done_file output result
-    filename=$(basename "$capture")
+    filename=${capture##*/}
     done_file="$STATE_DIR/${filename}.done"
     [ -f "$done_file" ] && return
 
@@ -72,23 +72,28 @@ process_capture() {
 }
 
 scan_completed_captures() {
-    local capture previous=""
+    local capture previous="" captures=()
 
     # Take one ordered snapshot. Using separate "newest" and "all files"
     # queries creates a race when dumpcap rotates between the two queries.
     # Hold one item back while reading so the last item is never processed.
-    while IFS= read -r capture; do
-        [ -n "$capture" ] || continue
-        if [ -n "$previous" ] && [ -f "$previous" ]; then
-            process_capture "$previous"
-        fi
-        previous="$capture"
-    done < <(
+    # Read the list into an array first: on this bash (4.2) every function call
+    # made inside "while read ... done < <(...)" leaks about 1.4KB (2026-11-17).
+    mapfile -t captures < <(
         find "$CAPTURE_DIR" -maxdepth 1 -type f \
             \( -name '*.pcap' -o -name '*.pcapng' \) \
             -printf '%T@ %p\n' 2>/dev/null \
         | sort -n | cut -d' ' -f2-
     )
+    # Under set -u, bash 4.2 treats an empty "${captures[@]}" as unbound.
+    [ "${#captures[@]}" -gt 0 ] || return 0
+    for capture in "${captures[@]}"; do
+        [ -n "$capture" ] || continue
+        if [ -n "$previous" ] && [ -f "$previous" ]; then
+            process_capture "$previous"
+        fi
+        previous="$capture"
+    done
 }
 
 periodic_cleanup() {
