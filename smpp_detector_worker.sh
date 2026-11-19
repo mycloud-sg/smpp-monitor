@@ -12,7 +12,8 @@ LOG_FILE="$BASE_DIR/detector.log"
 PID_FILE="$PID_DIR/detector.pid"
 LAST_CLEANUP_FILE="$BASE_DIR/state/last_cleanup"
 INTERVAL="${INTERVAL:-15}"
-INCIDENT_RETENTION_DAYS="${INCIDENT_RETENTION_DAYS:-3}"
+INCIDENT_RETENTION_HOURS="${INCIDENT_RETENTION_HOURS:-24}"
+INCIDENT_RETENTION_MINUTES=$((INCIDENT_RETENTION_HOURS * 60))
 EXPORT_DIR="${EXPORT_DIR:-}"
 
 mkdir -p "$CAPTURE_DIR" "$PID_DIR" "$STATE_DIR" "$INCIDENT_DIR"
@@ -114,12 +115,12 @@ periodic_cleanup() {
     done < <(find "$STATE_DIR" -maxdepth 1 -type f -name '*.done' 2>/dev/null)
 
     find "$INCIDENT_DIR" -maxdepth 1 -type f -name '*.tar.gz' \
-        -mtime +"$INCIDENT_RETENTION_DAYS" -delete 2>/dev/null || true
+        -mmin +"$INCIDENT_RETENTION_MINUTES" -delete 2>/dev/null || true
     find "$INCIDENT_DIR" -mindepth 1 -maxdepth 1 -type d \
-        -mtime +"$INCIDENT_RETENTION_DAYS" -exec rm -rf {} \; 2>/dev/null || true
+        -mmin +"$INCIDENT_RETENTION_MINUTES" -exec rm -rf {} \; 2>/dev/null || true
     if [ -n "$EXPORT_DIR" ] && [ -d "$EXPORT_DIR" ]; then
         find "$EXPORT_DIR" -maxdepth 1 -type f \( -name '*.tar.gz' -o -name '*.json' -o -name '.*.tmp' \) \
-            -mtime +"$INCIDENT_RETENTION_DAYS" -delete 2>/dev/null || true
+            -mmin +"$INCIDENT_RETENTION_MINUTES" -delete 2>/dev/null || true
     fi
     echo "$now" > "$LAST_CLEANUP_FILE"
 }
