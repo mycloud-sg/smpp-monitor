@@ -73,7 +73,7 @@ ROTATE_SECONDS=60                    PCAP 切分周期
 SNAPLEN=0                            每个包保存的最大字节数，0 表示完整保存
 CAPTURE_RETENTION_MINUTES=30         PCAP 按时间保留的分钟数
 INTERVAL=15                          detector 检查新文件的周期
-TCP_RETRANSMISSION_THRESHOLD=5       单个 PCAP 内同一连接、同一方向的重发告警阈值
+TCP_RETRANSMISSION_THRESHOLD=5       重发达到该次数才写入事故上下文（单独出现不会生成事故）
 INCIDENT_COOLDOWN_SECONDS=300        同类事故冷却时间
 INCIDENT_RETENTION_HOURS=24          incident 保留小时数
 ALERT_ON_FIN=0                       是否将正常关闭连接记为事故
@@ -86,8 +86,21 @@ NETPROBE_SS_INTERVAL=2               ss -tin 采样间隔秒数
 EXPORT_GROUP=www                     导出文件的属组（权限 0640）
 ```
 
-如需把正常的 SMPP 连接关闭也记为事故，可设置 `ALERT_ON_FIN=1`。默认只保留强制断开、
-传输异常和 SMPP 错误告警。
+## 什么情况会生成事故
+
+只有已经影响业务的异常才生成事故：
+
+| 事件 | 含义 |
+|---|---|
+| `SMPP_RESP_TIMEOUT` | submit_sm 超过 Supplier timeout 未响应 |
+| `SMPP_SUBMIT_FAILED` | Supplier 明确返回提交失败 |
+| `SMPP_BIND_LOST` | 已建立的 bind 被 unbind |
+| `TCP_RESET` | 连接被 RST 复位（已发出 FIN 后的 RST 属于正常关闭收尾，不计） |
+| `SMPP_BIND_FAILED` | bind 被拒绝；同一 Supplier、同一错误码只报第一次，之后有 bind 成功才重新计数（状态在 `state/bind-failed/`） |
+| `TCP_CLOSED` | 仅在 `ALERT_ON_FIN=1` 时 |
+
+TCP 重发、对端暂停接收（zero window）只作为事故的上下文写进 `details.json`，单独出现不生成事故；
+原始包仍在 PCAP 环形缓存中，需要时可以回查。
 
 ## 诊断职责
 

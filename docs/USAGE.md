@@ -135,11 +135,11 @@ capture filter: (host 85.119.48.101 and port 30000) or ...
 | `CAPTURE_RETENTION_MINUTES` | `30` | 源 PCAP 保留时间 |
 | `CONFIG_CHECK_INTERVAL` | `5` | Supplier 配置检查周期，单位秒 |
 | `INTERVAL` | `15` | detector 扫描新 PCAP 的周期，单位秒 |
-| `TCP_RETRANSMISSION_THRESHOLD` | `5` | 单个 PCAP 内同一连接、同一方向触发诊断的 TCP 重发数量 |
+| `TCP_RETRANSMISSION_THRESHOLD` | `5` | 单个 PCAP 内同一连接、同一方向的重发达到该数量时写入事故上下文；单独出现不生成事故 |
 | `INCIDENT_COOLDOWN_SECONDS` | `300` | 同类 incident 冷却时间 |
-| `INCIDENT_RETENTION_DAYS` | `3` | incident 保留天数 |
+| `INCIDENT_RETENTION_HOURS` | `24` | incident 保留小时数 |
 | `ALERT_ON_FIN` | `0` | 是否将正常关闭连接作为事故 |
-| `EXPORT_DIR` | 空 | 非空时把每个 incident 的压缩包和摘要 JSON 复制到该目录，供 Web 后台读取；同样按 `INCIDENT_RETENTION_DAYS` 清理 |
+| `EXPORT_DIR` | 空 | 非空时把每个 incident 的压缩包和摘要 JSON 复制到该目录，供 Web 后台读取；同样按 `INCIDENT_RETENTION_HOURS` 清理 |
 | `EXPORT_GROUP` | `www` | 导出文件的属组，文件权限为 `0640`，只有该组可读 |
 
 示例：保留 60 分钟 PCAP，并关闭正常 FIN 告警：

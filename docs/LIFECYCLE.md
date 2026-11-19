@@ -191,15 +191,20 @@ tshark 负责协议解码；detector 负责业务判断和中文描述。
 由于 Supplier 经常使用非标准 SMPP 端口，detector 会根据 `smpp_suppliers.conf` 为每个
 端口显式设置 tshark `decode-as`，不依赖 tshark 的自动协议识别。
 
-当前检测范围：
+当前检测范围（生成事故的触发条件）：
 
-- TCP 强制断开；
-- TCP 正常关闭，可通过 `ALERT_ON_FIN=0` 禁用；
-- TCP 重发达到阈值；
-- 连接一侧暂停接收数据；
-- SMPP bind 失败或解除；
+- TCP 强制断开（RST）；已发出 FIN 的连接随后的 RST 属于正常关闭收尾，不计入；
+- TCP 正常关闭，仅 `ALERT_ON_FIN=1` 时；
+- SMPP bind 失败：同一 Supplier、同一错误码只报第一次，之后出现 bind 成功才重新计数；
+  被拒绝的 bind 连接上的 RST 视为同一问题；
+- SMPP bind 解除；
 - `submit_sm_resp` 超过 Supplier 的 timeout，或到期仍未见响应；
 - `submit_sm_resp` 返回非成功状态。
+
+只作为上下文、单独出现不生成事故：
+
+- TCP 重发达到阈值；
+- 连接一侧暂停接收数据。
 
 未完成的 `submit_sm` 请求保存在 `state/pending-submits.json`，以 Supplier、本地 TCP 端口和
 SMPP sequence number 关联跨 PCAP 的响应。该文件在分析成功后原子更新；到期仍未见响应时

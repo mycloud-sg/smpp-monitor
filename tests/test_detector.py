@@ -126,6 +126,89 @@ class DetectorTest(unittest.TestCase):
         self.assertEqual(event["local_port"], "26840")
         self.assertEqual(event["source"], "local")
 
+    def test_bind_responses_record_status_and_port(self):
+        failed = packet(100, "85.119.48.101", "172.31.30.172", 30000, 26840,
+                        "0x80000009", "1", "0x0000000e")
+        ok = packet(101, "85.119.48.101", "172.31.30.172", 30000, 26842,
+                    "0x80000009", "2", "0x00000000")
+        findings, _ = detector.analyze([failed, ok], SUPPLIERS)
+        events = findings["supplier"]
+        self.assertEqual([e["type"] for e in events], ["SMPP_BIND_FAILED", "SMPP_BIND_OK"])
+        self.assertEqual(events[0]["status_code"], "0xe")
+        self.assertEqual(events[0]["local_port"], "26840")
+
+    def test_reset_after_fin_is_a_normal_close(self):
+        fin = packet(100, "172.31.30.172", "85.119.48.101", 26840, 30000).split("\t")
+        fin[7] = "1"
+        rst = packet(101, "85.119.48.101", "172.31.30.172", 30000, 26840).split("\t")
+        rst[6] = "1"
+        findings, _ = detector.analyze(["\t".join(fin), "\t".join(rst)], SUPPLIERS)
+        self.assertEqual(findings, {})
+
+        closing = {}
+        detector.analyze(["\t".join(fin)], SUPPLIERS, closing=closing)
+        findings, _ = detector.analyze(["\t".join(rst)], SUPPLIERS, closing=closing)
+        self.assertEqual(findings, {}, "FIN and RST in different capture files")
+
+        other = packet(102, "85.119.48.101", "172.31.30.172", 30000, 26842).split("\t")
+        other[6] = "1"
+        findings, _ = detector.analyze(["\t".join(other)], SUPPLIERS)
+        self.assertEqual(findings["supplier"][0]["type"], "TCP_RESET")
+
+
+def ev(event_type, time, **details):
+    return detector.event(event_type, "TCP" if event_type.startswith("TCP") else "SMPP",
+                          time, **details)
+
+
+class SelectIncidentEventsTest(unittest.TestCase):
+    def test_retransmission_alone_is_not_an_incident(self):
+        events = [ev("TCP_RETRANSMISSION", 100, count=20, local_port="1")]
+        self.assertEqual(detector.select_incident_events(events, {}), [])
+
+    def test_retransmission_is_kept_as_context_of_a_timeout(self):
+        events = [ev("TCP_RETRANSMISSION", 100, count=20, local_port="1"),
+                  ev("SMPP_RESP_TIMEOUT", 130, local_port="1")]
+        selected = detector.select_incident_events(events, {})
+        self.assertEqual([e["type"] for e in selected],
+                         ["TCP_RETRANSMISSION", "SMPP_RESP_TIMEOUT"])
+
+    def test_repeated_bind_failure_is_reported_once_until_bind_succeeds(self):
+        state = {}
+        fail = [ev("SMPP_BIND_FAILED", 100, status_code="0xe", local_port="1")]
+        self.assertTrue(detector.select_incident_events(fail, state))
+        self.assertIn("0xe", state)
+        again = [ev("SMPP_BIND_FAILED", 160, status_code="0xe", local_port="2")]
+        self.assertEqual(detector.select_incident_events(again, state), [])
+
+        other_code = [ev("SMPP_BIND_FAILED", 170, status_code="0xd", local_port="3")]
+        self.assertTrue(detector.select_incident_events(other_code, state))
+
+        recovered = [ev("SMPP_BIND_OK", 200, local_port="4")]
+        self.assertEqual(detector.select_incident_events(recovered, state), [])
+        self.assertEqual(state, {})
+        self.assertTrue(detector.select_incident_events(again, state))
+
+    def test_bind_ok_before_failure_in_same_capture_keeps_failure_active(self):
+        state = {"0xe": 50}
+        events = [ev("SMPP_BIND_OK", 100, local_port="1"),
+                  ev("SMPP_BIND_FAILED", 110, status_code="0xe", local_port="2")]
+        self.assertTrue(detector.select_incident_events(events, state))
+        self.assertEqual(state, {"0xe": 110})
+
+    def test_reset_of_a_rejected_bind_does_not_trigger(self):
+        state = {"0xe": 50}
+        events = [ev("SMPP_BIND_FAILED", 100, status_code="0xe", local_port="7"),
+                  ev("TCP_RESET", 100.1, source="local", local_port="7")]
+        self.assertEqual(detector.select_incident_events(events, state), [])
+
+    def test_reset_of_a_working_connection_triggers(self):
+        state = {"0xe": 50}
+        events = [ev("SMPP_BIND_FAILED", 100, status_code="0xe", local_port="7"),
+                  ev("TCP_RESET", 101, source="supplier", local_port="8")]
+        selected = detector.select_incident_events(events, state)
+        self.assertEqual([e["type"] for e in selected], ["SMPP_BIND_FAILED", "TCP_RESET"])
+
 
 if __name__ == "__main__":
     unittest.main()

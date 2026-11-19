@@ -22,11 +22,26 @@ DIAGNOSIS_LATEST = os.path.join(BASE_DIR, "diagnosis-latest.txt")
 LATEST_DIR = os.path.join(BASE_DIR, "state", "latest")
 COOLDOWN_DIR = os.path.join(BASE_DIR, "state", "cooldown")
 PENDING_FILE = os.path.join(BASE_DIR, "state", "pending-submits.json")
+BIND_STATE_DIR = os.path.join(BASE_DIR, "state", "bind-failed")
+CLOSING_FILE = os.path.join(BASE_DIR, "state", "closing-connections.json")
+CLOSING_TTL_SECONDS = 120
 INCIDENT_SCRIPT = os.path.join(BASE_DIR, "smpp_incident.sh")
 
 RETRANSMISSION_THRESHOLD = int(os.environ.get("TCP_RETRANSMISSION_THRESHOLD", "5"))
 INCIDENT_COOLDOWN_SECONDS = int(os.environ.get("INCIDENT_COOLDOWN_SECONDS", "300"))
 ALERT_ON_FIN = os.environ.get("ALERT_ON_FIN", "0") != "0"
+
+# Only events that mean traffic is already affected open an incident. TCP
+# retransmissions and zero windows stay in the incident as context and in the
+# PCAP ring, but on their own they are not an incident.
+TRIGGER_EVENTS = {
+    "SMPP_RESP_TIMEOUT",
+    "SMPP_BIND_LOST",
+    "SMPP_BIND_FAILED",
+    "SMPP_SUBMIT_FAILED",
+    "TCP_RESET",
+    "TCP_CLOSED",
+}
 
 SUBMIT_SM = 0x00000004
 SUBMIT_SM_RESP = 0x80000004
@@ -147,12 +162,19 @@ def event(event_type, layer, timestamp, **details):
     return value
 
 
-def analyze(lines, suppliers, pending=None, capture_end=None):
+def analyze(lines, suppliers, pending=None, capture_end=None, closing=None):
     # TCP stream numbers are local to each PCAP. The local TCP port plus the
     # SMPP sequence number remains stable across minute-sized rotations.
     pending = dict(pending or {})
     results = {name: {"events": [], "retransmissions": []} for name in suppliers}
     latest_timestamp = 0
+    # Connections that already sent a FIN ("supplier|local_port" -> time).
+    # A RST after a FIN only finishes a close that one side already started
+    # (for example a port probe that sends 1 byte and closes), so it is not a
+    # broken connection. The caller may pass a dict to carry this across
+    # minute-sized capture files; it is updated in place.
+    if closing is None:
+        closing = {}
 
     for line in lines:
         row = line.split("\t")
@@ -174,10 +196,13 @@ def analyze(lines, suppliers, pending=None, capture_end=None):
         bucket = results[supplier]
         local_port = row[3] if direction == "local_to_supplier" else row[4]
 
-        if reset:
+        closing_key = "|".join((supplier, local_port))
+        if reset and closing_key not in closing:
             source = "supplier" if direction == "supplier_to_local" else "local"
             bucket["events"].append(event("TCP_RESET", "TCP", timestamp,
                                           source=source, local_port=local_port))
+        if fin:
+            closing[closing_key] = timestamp
         if fin and ALERT_ON_FIN:
             source = "supplier" if direction == "supplier_to_local" else "local"
             bucket["events"].append(event("TCP_CLOSED", "TCP", timestamp,
@@ -228,11 +253,14 @@ def analyze(lines, suppliers, pending=None, capture_end=None):
                               sequence=sequence, status=STATUS_MAP.get(command_status, hex(command_status)),
                               status_code=hex(command_status))
                     )
-            elif command_id in BIND_RESPONSES and command_status not in (None, 0):
+            elif command_id in BIND_RESPONSES and command_status == 0:
+                bucket["events"].append(event("SMPP_BIND_OK", "SMPP", timestamp,
+                                              local_port=local_port))
+            elif command_id in BIND_RESPONSES and command_status is not None:
                 bucket["events"].append(
                     event("SMPP_BIND_FAILED", "SMPP", timestamp,
                           status=STATUS_MAP.get(command_status, hex(command_status)),
-                          status_code=hex(command_status))
+                          status_code=hex(command_status), local_port=local_port)
                 )
             elif command_id == UNBIND:
                 source = "supplier" if direction == "supplier_to_local" else "local"
@@ -257,6 +285,9 @@ def analyze(lines, suppliers, pending=None, capture_end=None):
 
     if not latest_timestamp and capture_end is not None:
         latest_timestamp = capture_end
+    for key in [key for key, fin_time in closing.items()
+                if latest_timestamp - fin_time > CLOSING_TTL_SECONDS]:
+        del closing[key]
     for key, submit_time in list(pending.items()):
         name, local_port, sequence = key.split("|", 2)
         if name not in suppliers:
@@ -300,6 +331,24 @@ def load_pending():
     except (ValueError, TypeError) as exc:
         raise RuntimeError("invalid pending submit state: {}".format(exc))
     raise RuntimeError("invalid pending submit state: expected object")
+
+
+def load_closing():
+    try:
+        with open(CLOSING_FILE, "r") as file_obj:
+            value = json.load(file_obj)
+        return {key: float(timestamp) for key, timestamp in value.items()
+                if isinstance(key, str)} if isinstance(value, dict) else {}
+    except (OSError, ValueError, TypeError, AttributeError):
+        return {}
+
+
+def save_closing(closing):
+    os.makedirs(os.path.dirname(CLOSING_FILE), exist_ok=True)
+    temporary = CLOSING_FILE + ".tmp"
+    with open(temporary, "w") as file_obj:
+        json.dump(closing, file_obj)
+    os.replace(temporary, CLOSING_FILE)
 
 
 def save_pending(pending):
@@ -466,6 +515,64 @@ def create_incident(supplier, diagnosis_path, details_path, pcaps):
         print(process.stdout, file=sys.stderr)
 
 
+def load_bind_state(supplier):
+    try:
+        with open(os.path.join(BIND_STATE_DIR, supplier + ".json"), "r") as file_obj:
+            value = json.load(file_obj)
+        return value if isinstance(value, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def save_bind_state(supplier, state):
+    path = os.path.join(BIND_STATE_DIR, supplier + ".json")
+    if not state:
+        try:
+            os.remove(path)
+        except FileNotFoundError:
+            pass
+        return
+    os.makedirs(BIND_STATE_DIR, exist_ok=True)
+    temporary = path + ".tmp"
+    with open(temporary, "w") as file_obj:
+        json.dump(state, file_obj)
+    os.replace(temporary, path)
+
+
+def select_incident_events(events, bind_state):
+    """Decide whether one supplier's events in one capture are an incident.
+
+    bind_state maps a bind failure status_code to the time it was first
+    reported; it is updated in place. A failure already in the state is a
+    known, ongoing problem (a wrong password fails every reconnect) and is
+    not reported again until a later bind succeeds. RSTs on the connections
+    of those failed binds belong to the same problem.
+
+    Returns the events to put in the incident, or [] when nothing triggers.
+    """
+    failed_ports = set()
+    triggered = False
+    for item in sorted(events, key=lambda value: value["time"]):
+        if item["type"] == "SMPP_BIND_OK":
+            bind_state.clear()
+        elif item["type"] == "SMPP_BIND_FAILED":
+            failed_ports.add(item.get("local_port"))
+            code = item.get("status_code") or ""
+            if code not in bind_state:
+                bind_state[code] = item["time"]
+                triggered = True
+    for item in events:
+        if item["type"] in ("SMPP_BIND_OK", "SMPP_BIND_FAILED"):
+            continue
+        if item["type"] == "TCP_RESET" and item.get("local_port") in failed_ports:
+            continue
+        if item["type"] in TRIGGER_EVENTS:
+            triggered = True
+    if not triggered:
+        return []
+    return [item for item in events if item["type"] != "SMPP_BIND_OK"]
+
+
 def handle_diagnosis(supplier, config, events, trigger_pcap):
     timestamps = []
     for item in events:
@@ -474,7 +581,7 @@ def handle_diagnosis(supplier, config, events, trigger_pcap):
             timestamps.append(item["end_time"])
     start, end = min(timestamps), max(timestamps)
     layer, descriptions, location = describe(events)
-    event_types = {item["type"] for item in events}
+    event_types = {item["type"] for item in events if item["type"] in TRIGGER_EVENTS}
     if in_cooldown(supplier, layer, event_types, time.time()):
         return
 
@@ -526,18 +633,28 @@ def main():
     try:
         suppliers = load_suppliers()
         pending = load_pending() if only_supplier is None else {}
+        closing = load_closing() if only_supplier is None else {}
         findings, pending = analyze(run_tshark(pcap, suppliers), suppliers, pending,
-                                    capture_end=os.path.getmtime(pcap))
+                                    capture_end=os.path.getmtime(pcap), closing=closing)
         if only_supplier is not None:
             if only_supplier not in suppliers:
                 raise RuntimeError("supplier config not found: {}".format(only_supplier))
             findings = ({only_supplier: findings[only_supplier]}
                         if only_supplier in findings else {})
+        created = False
         for supplier, events in findings.items():
-            handle_diagnosis(supplier, suppliers[supplier], events, pcap)
+            # A manual single-supplier run must not change the live bind state.
+            bind_state = load_bind_state(supplier)
+            incident_events = select_incident_events(events, bind_state)
+            if only_supplier is None:
+                save_bind_state(supplier, bind_state)
+            if incident_events:
+                handle_diagnosis(supplier, suppliers[supplier], incident_events, pcap)
+                created = True
         if only_supplier is None:
             save_pending(pending)
-        return 2 if findings else 0
+            save_closing(closing)
+        return 2 if created else 0
     except (OSError, RuntimeError, ValueError) as exc:
         print("detector error: {}".format(exc), file=sys.stderr)
         return 1
