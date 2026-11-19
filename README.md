@@ -79,8 +79,8 @@ INCIDENT_RETENTION_HOURS=24          incident 保留小时数
 ALERT_ON_FIN=0                       是否将正常关闭连接记为事故
 EXPORT_DIR=                          非空时把 incident 复制到该目录供 Web 后台下载
 NETPROBE=1                           事故触发时后台采集 mtr / ss 现场证据，0 关闭
-NETPROBE_MTR_COUNT=100               mtr 探测次数（TCP 到业务端口、ICMP 各一份，并行）
-NETPROBE_MTR_INTERVAL=0.5            mtr 探测间隔秒数
+NETPROBE_MTR_COUNT=120               mtr（ICMP）探测轮数
+NETPROBE_MTR_INTERVAL=1              mtr 每轮间隔秒数（默认共 2 分钟，与 ss 采样同长）
 NETPROBE_SS_SECONDS=120              ss -tin 采样总时长
 NETPROBE_SS_INTERVAL=2               ss -tin 采样间隔秒数
 EXPORT_GROUP=www                     导出文件的属组（权限 0640）
@@ -123,14 +123,25 @@ TCP 重发、对端暂停接收（zero window）只作为事故的上下文写�
 结果写入 `incidents/<id>/net/`，完成后重新打包 `<id>.tar.gz`（配置了 `EXPORT_DIR` 时同时重新导出）：
 
 ```text
-mtr-tcp.txt          mtr TCP 模式，探测供应商真实端口（与业务流量同协议）
-mtr-icmp.txt         mtr ICMP 模式，同一路径对照（区分真实转发丢包与路由器 ICMP 限速）
+summary.txt          自动结论（同时写进事故包的 diagnosis.txt，Web 页可见）
+mtr-icmp.txt         mtr ICMP 模式，逐跳延迟与丢包（丢包从哪一跳开始）
 ss-series.txt        每 NETPROBE_SS_INTERVAL 秒一次 ss -tin（rtt / rto / cwnd / retrans / Send-Q）
 nstat-start/end.txt  系统 TCP 计数器起止快照
 route.txt            到供应商的路由
 ip-link-stats-end.txt 结束时网卡计数器
 ```
 
-同一 `ip:port` 同时只跑一个 netprobe（`locks/netprobe-<ip>-<port>.lock`），被跳过时写 `net/skipped.txt`。
-默认约 2 分钟完成，期间事故包内暂时还没有 `net/`。
+分工：mtr 只回答“丢包从哪一跳开始”；TCP 层的情况看真实 SMPP 连接（ss 序列 + PCAP 里双方各自的重传）。
+`smpp_netprobe_summary.py` 把三者整理成几行结论：
+
+- 路径：终点丢包且从第 N 跳起一直延续到终点 → 问题在第 N-1 到第 N 跳之间；只有中间跳丢包 → 路由器限速，忽略；
+  终点不回 ICMP → mtr 看不到端到端，以连接和重传数据为准
+- 连接：采样期间已建立连接的重传增量、rtt 范围、停在 SYN-SENT 的建连次数
+- 重传：只有本机重传 → 去程嫌疑；只有供应商重传 → 回程嫌疑（mtr 看不到回程）
+
+不使用 `mtr -T`：mtr 的 TCP 模式会对供应商业务端口真实建连（每次事故上百次），内核 SYN 重发让延迟显示成
+1s/3s/7s，探测连接还会进入共享 PCAP 被 detector 计为 `TCP_RESET`。
+
+同一 `ip:port` 同时只跑一个 netprobe（`locks/netprobe-<ip>-<port>.lock`，内容是持有者的事故编号），
+被跳过时写 `net/skipped.txt` 并指向正在采集的事故。默认约 2 分钟完成，期间事故包内暂时还没有 `net/`。
 
